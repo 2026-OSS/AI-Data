@@ -1,3 +1,12 @@
+---
+name: Issue template
+about: Issue template !
+title: ''
+labels: ''
+assignees: ''
+
+---
+
 ## 📌 작업 내용
 
 해야 할 작업을 작성해주세요.
