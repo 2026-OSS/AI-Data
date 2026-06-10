@@ -66,13 +66,35 @@
 
 ## 파일명 규칙
 
+개인 이름은 파일명에 포함하지 않는다.
+
+모델 학습에서 범용적으로 사용할 수 있도록 이미지 파일명은 의미를 최소화한 고유 번호 형식을 사용한다.
+라벨 정보는 클래스 디렉터리 또는 라벨 파일에서 관리한다.
+
+### 이미지 분류
+
+클래스별 디렉터리에 이미지를 저장하고, 파일명은 6자리 연속 번호를 사용한다.
+
 예시
 
-page1_yein_001.jpg
+```text
+dataset/page_classifier/train/page1/000001.jpg
+dataset/page_classifier/train/page1/000002.jpg
+dataset/page_classifier/train/none/000001.jpg
+```
 
-book_monkey_narin_001.jpg
+### 객체 인식
 
-braille_yeowon_001.jpg
+이미지와 라벨 파일은 같은 파일명을 사용하고 확장자만 다르게 관리한다.
+
+예시
+
+```text
+dataset/object_classifier/images/train/000001.jpg
+dataset/object_classifier/labels/train/000001.txt
+dataset/object_classifier/images/train/000002.jpg
+dataset/object_classifier/labels/train/000002.txt
+```
 
 ---
 
