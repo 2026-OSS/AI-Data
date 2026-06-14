@@ -9,4 +9,5 @@
 
 ## Documents
 
-- dataset_structure.md
+- [01_dataset_structure.md](docs/01_dataset_structure.md): 데이터셋 구조 및 클래스 정의
+- [02_dataset_collection.md](docs/02_dataset_collection.md): 객체 탐지 데이터셋 수집 기준
