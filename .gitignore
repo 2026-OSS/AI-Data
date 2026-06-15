@@ -1,1 +1,14 @@
 .DS_Store
+.cache/
+
+# Keep only backend handoff files in the YOLOv5 v2 artifact directory.
+artifacts/yolov5-v2/*
+!artifacts/yolov5-v2/
+!artifacts/yolov5-v2/README.md
+!artifacts/yolov5-v2/best.pt
+!artifacts/yolov5-v2/data.yaml
+
+# Local YOLOv5 clone and generated outputs
+yolov5/
+
+scripts
