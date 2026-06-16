@@ -8,6 +8,13 @@ artifacts/yolov5-v2/*
 !artifacts/yolov5-v2/best.pt
 !artifacts/yolov5-v2/data.yaml
 
+# Keep only backend handoff files in the YOLOv5 v6 artifact directory.
+artifacts/yolov5-v6/*
+!artifacts/yolov5-v6/
+!artifacts/yolov5-v6/README.md
+!artifacts/yolov5-v6/best.pt
+!artifacts/yolov5-v6/data.yaml
+
 # Local YOLOv5 clone and generated outputs
 yolov5/
 

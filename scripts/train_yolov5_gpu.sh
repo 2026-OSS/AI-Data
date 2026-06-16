@@ -3,9 +3,12 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 YOLO_DIR="$ROOT_DIR/yolov5"
-DATASET_DIR="$YOLO_DIR/AI-Picture-Book-Object-Detection-2"
+ROBOFLOW_VERSION="${ROBOFLOW_VERSION:-2}"
+DATASET_NAME="AI-Picture-Book-Object-Detection-${ROBOFLOW_VERSION}"
+DATASET_DIR="$YOLO_DIR/$DATASET_NAME"
 DATA_YAML="$DATASET_DIR/data.yaml"
 PYTHON_BIN="${PYTHON_BIN:-python3}"
+export ROBOFLOW_VERSION DATASET_NAME
 
 if ! command -v "$PYTHON_BIN" >/dev/null 2>&1; then
   PYTHON_BIN="python"
@@ -37,22 +40,24 @@ from roboflow import Roboflow
 
 rf = Roboflow(api_key=os.environ["ROBOFLOW_API_KEY"])
 project = rf.workspace("2026-oss").project("ai-picture-book-object-detection")
-project.version(2).download("yolov5")
+project.version(int(os.environ.get("ROBOFLOW_VERSION", "2"))).download("yolov5")
 PY
 fi
 
 "$PYTHON_BIN" - <<'PY'
+import os
 from pathlib import Path
 
-yaml_path = Path("AI-Picture-Book-Object-Detection-2/data.yaml")
+dataset_name = os.environ["DATASET_NAME"]
+yaml_path = Path(dataset_name) / "data.yaml"
 data = yaml_path.read_text()
 replacements = {
-    "train: train/images": "train: ./AI-Picture-Book-Object-Detection-2/train/images",
-    "val: valid/images": "val: ./AI-Picture-Book-Object-Detection-2/valid/images",
-    "test: test/images": "test: ./AI-Picture-Book-Object-Detection-2/test/images",
-    "train: ../train/images": "train: ./AI-Picture-Book-Object-Detection-2/train/images",
-    "val: ../valid/images": "val: ./AI-Picture-Book-Object-Detection-2/valid/images",
-    "test: ../test/images": "test: ./AI-Picture-Book-Object-Detection-2/test/images",
+    "train: train/images": f"train: ./{dataset_name}/train/images",
+    "val: valid/images": f"val: ./{dataset_name}/valid/images",
+    "test: test/images": f"test: ./{dataset_name}/test/images",
+    "train: ../train/images": f"train: ./{dataset_name}/train/images",
+    "val: ../valid/images": f"val: ./{dataset_name}/valid/images",
+    "test: ../test/images": f"test: ./{dataset_name}/test/images",
 }
 for old, new in replacements.items():
     data = data.replace(old, new)
@@ -82,7 +87,7 @@ PY
   --img "${IMG_SIZE:-640}" \
   --batch "${BATCH_SIZE:-16}" \
   --epochs "${EPOCHS:-100}" \
-  --data ./AI-Picture-Book-Object-Detection-2/data.yaml \
+  --data "./${DATASET_NAME}/data.yaml" \
   --weights yolov5s.pt \
   --device "${CUDA_DEVICE:-0}" \
-  --name "${RUN_NAME:-picture_book_yolov5}"
+  --name "${RUN_NAME:-picture_book_yolov5_v${ROBOFLOW_VERSION}}"
