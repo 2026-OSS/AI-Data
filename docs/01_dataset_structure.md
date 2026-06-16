@@ -17,7 +17,9 @@
 AI-Data/
 ├── README.md
 ├── docs/
-│   └── dataset_structure.md
+│   ├── 01_dataset_structure.md
+│   ├── 02_dataset_collection.md
+│   └── 03_dataset_labeling.md
 └── dataset/
     ├── page_classifier/
     │   ├── train/
