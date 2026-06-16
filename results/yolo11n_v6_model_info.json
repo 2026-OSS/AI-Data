@@ -1,0 +1,36 @@
+{
+  "model_name": "yolo11n.pt",
+  "run_name": "picture_book_yolo11n_v6",
+  "dataset_version": 6,
+  "input": {
+    "type": "image_or_webcam_frame",
+    "image_size": 640
+  },
+  "output": {
+    "class_name": "detected object class",
+    "confidence": "detection confidence score",
+    "bbox": "[x1, y1, x2, y2]"
+  },
+  "classes": [
+    "book_flower",
+    "book_flowerpot",
+    "book_monkey",
+    "book_stone",
+    "braille",
+    "tactile_flower",
+    "tactile_flowerpot",
+    "tactile_monkey",
+    "tactile_stone",
+    "text"
+  ],
+  "best_model_path": "/content/runs/detect/runs/detect/picture_book_yolo11n_v6/weights/best.pt",
+  "metrics": {
+    "model": "yolo11n.pt",
+    "dataset_version": 6,
+    "precision": 0.834799931982832,
+    "recall": 0.7191307808985743,
+    "mAP@0.5": 0.7755055488769996,
+    "mAP@0.5:0.95": 0.5451876168317076,
+    "best_model_path": "/content/runs/detect/runs/detect/picture_book_yolo11n_v6/weights/best.pt"
+  }
+}
