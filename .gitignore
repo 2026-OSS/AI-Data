@@ -5,3 +5,6 @@
 
 # Jupyter
 .ipynb_checkpoints/
+
+# Training outputs
+runs/
