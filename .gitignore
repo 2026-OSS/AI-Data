@@ -1,5 +1,6 @@
 .DS_Store
 .cache/
+.venv/
 
 # Keep only backend handoff files in the YOLOv5 v2 artifact directory.
 artifacts/yolov5-v2/*
