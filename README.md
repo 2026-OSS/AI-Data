@@ -13,6 +13,7 @@
 
 - [01_dataset_structure.md](docs/01_dataset_structure.md): 데이터셋 구조 및 클래스 정의
 - [02_dataset_collection.md](docs/02_dataset_collection.md): 객체 탐지 데이터셋 수집 기준
+- [03_dataset_labeling.md](docs/03_dataset_labeling.md): Roboflow 데이터 라벨링 및 페이지별 음성 설명 매핑
 
 ## Webcam Page Classifier
 
