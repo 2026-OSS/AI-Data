@@ -1,9 +1,0 @@
-{
-  "model": "yolo11n.pt",
-  "dataset_version": 10,
-  "precision": 0.8936409899056452,
-  "recall": 0.7805967764340591,
-  "mAP@0.5": 0.8310689854005643,
-  "mAP@0.5:0.95": 0.6474503322992797,
-  "best_model_path": "/content/runs/detect/runs/detect/picture_book_yolo11n_v10/weights/best.pt"
-}
