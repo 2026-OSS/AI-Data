@@ -1,0 +1,10 @@
+{
+  "model": "yolo11n.pt",
+  "dataset_version": 13,
+  "precision": 0.8907734828114379,
+  "recall": 0.8769620987113477,
+  "mAP@0.5": 0.9028510216384322,
+  "mAP@0.5:0.95": 0.711828303130534,
+  "best_model_path": "/home/user/AI-Data/runs/detect/runs/detect/picture_book_yolo11n_v13/weights/best.pt",
+  "data_yaml_path": "/home/user/AI-Data/AI-Picture-Book-Object-Detection-13/data.yaml"
+}
