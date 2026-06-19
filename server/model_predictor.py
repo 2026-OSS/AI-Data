@@ -28,29 +28,41 @@ class ModelPredictor:
         page_model_path: str | Path = DEFAULT_PAGE_MODEL_PATH,
         yolo_data_yaml: str | Path = DEFAULT_YOLO_DATA_YAML,
         page_classes: list[str] | None = None,
+        fixed_page_label: str | None = None,
+        fixed_page_confidence: float = 1.0,
+        disable_hands: bool = False,
     ) -> None:
         self.yolo_model_path = Path(yolo_model_path)
         self.page_model_path = Path(page_model_path)
         self.yolo_class_names = load_class_names(yolo_data_yaml)
         self.page_classes = page_classes or DEFAULT_PAGE_CLASSES
+        self.fixed_page_label = fixed_page_label
+        self.fixed_page_confidence = fixed_page_confidence
+        self.disable_hands = disable_hands
 
         self._cv2 = _import_dependency("cv2", "opencv-python")
         self._np = _import_dependency("numpy", "numpy")
         ultralytics = _import_dependency("ultralytics", "ultralytics")
-        mediapipe = _import_dependency("mediapipe", "mediapipe")
-        tensorflow = _import_dependency("tensorflow", "tensorflow")
+        if self.disable_hands:
+            mediapipe = None
+        else:
+            mediapipe = _import_dependency("mediapipe.solutions.hands", "mediapipe")
 
         if not self.yolo_model_path.exists():
             raise PredictionUnavailable(f"YOLO model not found: {self.yolo_model_path}")
-        if not self.page_model_path.exists():
+        if self.fixed_page_label is None and not self.page_model_path.exists():
             raise PredictionUnavailable(f"page model not found: {self.page_model_path}")
 
         self.yolo_model = ultralytics.YOLO(str(self.yolo_model_path))
-        self.page_model = tensorflow.keras.models.load_model(str(self.page_model_path))
-        self.hands = mediapipe.solutions.hands.Hands(
-            static_image_mode=True,
-            max_num_hands=1,
-        )
+        if self.fixed_page_label is None:
+            tensorflow = _import_dependency("tensorflow", "tensorflow")
+            self.page_model = tensorflow.keras.models.load_model(str(self.page_model_path))
+        else:
+            self.page_model = None
+        if self.disable_hands:
+            self.hands = None
+        else:
+            self.hands = mediapipe.Hands(static_image_mode=True, max_num_hands=1)
 
     @classmethod
     def from_env(cls) -> "ModelPredictor":
@@ -61,6 +73,9 @@ class ModelPredictor:
             page_classes=os.getenv("PAGE_CLASSES", ",".join(DEFAULT_PAGE_CLASSES)).split(
                 ","
             ),
+            fixed_page_label=os.getenv("PAGE_LABEL"),
+            fixed_page_confidence=float(os.getenv("PAGE_CONFIDENCE", "1.0")),
+            disable_hands=os.getenv("DISABLE_HANDS", "false").lower() == "true",
         )
 
     def predict(
@@ -84,6 +99,12 @@ class ModelPredictor:
         return image
 
     def _predict_page(self, image: Any) -> dict[str, Any]:
+        if self.fixed_page_label is not None:
+            return {
+                "label": self.fixed_page_label,
+                "confidence": self.fixed_page_confidence,
+            }
+
         input_image = self._prepare_page_input(image)
         probabilities = self.page_model.predict(input_image, verbose=0)[0]
         return convert_page_prediction(probabilities, self.page_classes)
@@ -93,6 +114,9 @@ class ModelPredictor:
         return convert_ultralytics_result(result, self.yolo_class_names)
 
     def _predict_finger(self, image: Any) -> dict[str, float] | None:
+        if self.disable_hands:
+            return None
+
         height, width = image.shape[:2]
         rgb_image = self._cv2.cvtColor(image, self._cv2.COLOR_BGR2RGB)
         results = self.hands.process(rgb_image)
