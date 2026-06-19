@@ -16,6 +16,24 @@ artifacts/yolov5-v6/*
 !artifacts/yolov5-v6/best.pt
 !artifacts/yolov5-v6/data.yaml
 
+# Keep only backend handoff files in the YOLO11n v12 artifact directory.
+artifacts/yolo11-v12/*
+!artifacts/yolo11-v12/
+!artifacts/yolo11-v12/README.md
+!artifacts/yolo11-v12/best.pt
+!artifacts/yolo11-v12/data.yaml
+
+# Keep backend handoff files and review images in the YOLO11n v13 artifact directory.
+artifacts/yolo11-v13/*
+!artifacts/yolo11-v13/
+!artifacts/yolo11-v13/README.md
+!artifacts/yolo11-v13/best.pt
+!artifacts/yolo11-v13/data.yaml
+!artifacts/yolo11-v13/results/
+!artifacts/yolo11-v13/results/**
+!artifacts/yolo11-v13/predictions/
+!artifacts/yolo11-v13/predictions/**
+
 # Local YOLOv5 clone and generated outputs
 yolov5/
 

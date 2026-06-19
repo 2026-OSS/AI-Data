@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+python-multipart
+httpx
+numpy
+opencv-python
+ultralytics
+tensorflow
+mediapipe==0.10.35

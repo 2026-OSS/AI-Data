@@ -27,7 +27,7 @@ def extract_index_finger_tip(
 ) -> dict[str, float]:
     _validate_image_size(image_width, image_height)
 
-    landmarks = hand_landmarks.landmark
+    landmarks = getattr(hand_landmarks, "landmark", hand_landmarks)
     if len(landmarks) <= INDEX_FINGER_TIP:
         raise ValueError("index finger tip landmark not found")
 
@@ -40,6 +40,10 @@ def extract_finger_from_results(
     image_width: int,
     image_height: int,
 ) -> dict[str, float] | None:
+    task_hands = getattr(results, "hand_landmarks", None)
+    if task_hands:
+        return extract_index_finger_tip(task_hands[0], image_width, image_height)
+
     hands = getattr(results, "multi_hand_landmarks", None)
     if not hands:
         return None
