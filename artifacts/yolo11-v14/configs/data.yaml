@@ -1,0 +1,21 @@
+names:
+- book_flower
+- book_flowerpot
+- book_monkey
+- book_stone
+- braille
+- tactile_flower
+- tactile_flowerpot
+- tactile_monkey
+- tactile_stone
+- text
+nc: 10
+roboflow:
+  license: MIT
+  project: ai-picture-book-object-detection
+  url: https://universe.roboflow.com/2026-oss/ai-picture-book-object-detection/dataset/14
+  version: 14
+  workspace: 2026-oss
+test: /home/user/AI-Data/AI-Picture-Book-Object-Detection-14/test/images
+train: /home/user/AI-Data/AI-Picture-Book-Object-Detection-14/train/images
+val: /home/user/AI-Data/AI-Picture-Book-Object-Detection-14/valid/images
