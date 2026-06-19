@@ -1,0 +1,3 @@
+model,dataset,precision,recall,map50,map50_95,model_file,notes
+YOLOv5s v6,Roboflow v6,0.917,0.847,0.885,0.660,artifacts/yolov5-v6/best.pt,YOLOv5s baseline result on Roboflow v6
+YOLO11n v6,Roboflow v6,0.835,0.719,0.776,0.545,models/yolo11n_v6_best.pt,YOLO11n result on Roboflow v6
