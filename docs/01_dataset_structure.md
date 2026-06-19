@@ -19,7 +19,9 @@ AI-Data/
 ├── docs/
 │   ├── 01_dataset_structure.md
 │   ├── 02_dataset_collection.md
-│   └── 03_dataset_labeling.md
+│   ├── 03_dataset_labeling.md
+│   ├── 04_dataset_preprocessing_augmentation.md
+│   └── 06_yolov5_training_environment.md
 └── dataset/
     ├── page_classifier/
     │   ├── train/
