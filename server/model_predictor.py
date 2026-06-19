@@ -1,0 +1,122 @@
+from __future__ import annotations
+
+import os
+from pathlib import Path
+from typing import Any
+
+from server.backend_response import build_backend_response
+from server.hand_response import extract_finger_from_results
+from server.page_response import DEFAULT_PAGE_CLASSES, convert_page_prediction
+from server.predictor import PredictionUnavailable
+from server.yolo_response import (
+    convert_ultralytics_result,
+    load_class_names,
+)
+
+
+DEFAULT_YOLO_MODEL_PATH = Path("artifacts/yolo11-v12/best.pt")
+DEFAULT_YOLO_DATA_YAML = Path("artifacts/yolo11-v12/data.yaml")
+DEFAULT_PAGE_MODEL_PATH = Path(
+    "artifacts/page-classifier-mobilenetv2/page_classifier_mobilenetv2.keras"
+)
+
+
+class ModelPredictor:
+    def __init__(
+        self,
+        yolo_model_path: str | Path = DEFAULT_YOLO_MODEL_PATH,
+        page_model_path: str | Path = DEFAULT_PAGE_MODEL_PATH,
+        yolo_data_yaml: str | Path = DEFAULT_YOLO_DATA_YAML,
+        page_classes: list[str] | None = None,
+    ) -> None:
+        self.yolo_model_path = Path(yolo_model_path)
+        self.page_model_path = Path(page_model_path)
+        self.yolo_class_names = load_class_names(yolo_data_yaml)
+        self.page_classes = page_classes or DEFAULT_PAGE_CLASSES
+
+        self._cv2 = _import_dependency("cv2", "opencv-python")
+        self._np = _import_dependency("numpy", "numpy")
+        ultralytics = _import_dependency("ultralytics", "ultralytics")
+        mediapipe = _import_dependency("mediapipe", "mediapipe")
+        tensorflow = _import_dependency("tensorflow", "tensorflow")
+
+        if not self.yolo_model_path.exists():
+            raise PredictionUnavailable(f"YOLO model not found: {self.yolo_model_path}")
+        if not self.page_model_path.exists():
+            raise PredictionUnavailable(f"page model not found: {self.page_model_path}")
+
+        self.yolo_model = ultralytics.YOLO(str(self.yolo_model_path))
+        self.page_model = tensorflow.keras.models.load_model(str(self.page_model_path))
+        self.hands = mediapipe.solutions.hands.Hands(
+            static_image_mode=True,
+            max_num_hands=1,
+        )
+
+    @classmethod
+    def from_env(cls) -> "ModelPredictor":
+        return cls(
+            yolo_model_path=os.getenv("YOLO_MODEL_PATH", str(DEFAULT_YOLO_MODEL_PATH)),
+            page_model_path=os.getenv("PAGE_MODEL_PATH", str(DEFAULT_PAGE_MODEL_PATH)),
+            yolo_data_yaml=os.getenv("YOLO_DATA_YAML", str(DEFAULT_YOLO_DATA_YAML)),
+            page_classes=os.getenv("PAGE_CLASSES", ",".join(DEFAULT_PAGE_CLASSES)).split(
+                ","
+            ),
+        )
+
+    def predict(
+        self,
+        image_bytes: bytes,
+        filename: str | None = None,
+        content_type: str | None = None,
+    ) -> dict[str, Any]:
+        image = self._decode_image(image_bytes)
+        page = self._predict_page(image)
+        objects = self._predict_objects(image)
+        finger = self._predict_finger(image)
+
+        return build_backend_response(page=page, objects=objects, finger=finger)
+
+    def _decode_image(self, image_bytes: bytes) -> Any:
+        buffer = self._np.frombuffer(image_bytes, dtype=self._np.uint8)
+        image = self._cv2.imdecode(buffer, self._cv2.IMREAD_COLOR)
+        if image is None:
+            raise ValueError("frame image cannot be decoded")
+        return image
+
+    def _predict_page(self, image: Any) -> dict[str, Any]:
+        input_image = self._prepare_page_input(image)
+        probabilities = self.page_model.predict(input_image, verbose=0)[0]
+        return convert_page_prediction(probabilities, self.page_classes)
+
+    def _predict_objects(self, image: Any) -> list[dict[str, Any]]:
+        result = self.yolo_model(image, verbose=False)[0]
+        return convert_ultralytics_result(result, self.yolo_class_names)
+
+    def _predict_finger(self, image: Any) -> dict[str, float] | None:
+        height, width = image.shape[:2]
+        rgb_image = self._cv2.cvtColor(image, self._cv2.COLOR_BGR2RGB)
+        results = self.hands.process(rgb_image)
+        return extract_finger_from_results(results, width, height)
+
+    def _prepare_page_input(self, image: Any) -> Any:
+        input_shape = self.page_model.input_shape
+        height = input_shape[1] or 224
+        width = input_shape[2] or 224
+
+        rgb_image = self._cv2.cvtColor(image, self._cv2.COLOR_BGR2RGB)
+        resized = self._cv2.resize(rgb_image, (width, height))
+        normalized = resized.astype("float32") / 255.0
+        return self._np.expand_dims(normalized, axis=0)
+
+
+def create_default_predictor() -> ModelPredictor:
+    return ModelPredictor.from_env()
+
+
+def _import_dependency(module_name: str, package_name: str) -> Any:
+    try:
+        return __import__(module_name)
+    except ModuleNotFoundError as exc:
+        raise PredictionUnavailable(
+            f"{package_name} is required for prediction"
+        ) from exc

@@ -81,8 +81,39 @@ def convert_yolov5_result(
     return convert_detections(detections, names)
 
 
+def convert_ultralytics_result(
+    result: Any,
+    class_names: list[str] | None = None,
+) -> list[dict[str, Any]]:
+    names = class_names or _resolve_result_names(result)
+    boxes = result.boxes
+
+    xyxy_rows = _to_list(boxes.xyxy)
+    confidence_rows = _to_list(boxes.conf)
+    class_rows = _to_list(boxes.cls)
+
+    detections = [
+        {
+            "xyxy": bbox,
+            "confidence": confidence,
+            "class_id": class_id,
+        }
+        for bbox, confidence, class_id in zip(xyxy_rows, confidence_rows, class_rows)
+    ]
+
+    return convert_detections(detections, names)
+
+
 def _resolve_result_names(result: Any) -> list[str]:
     names = result.names
     if isinstance(names, dict):
         return [names[index] for index in sorted(names)]
     return list(names)
+
+
+def _to_list(value: Any) -> list[Any]:
+    if hasattr(value, "cpu"):
+        value = value.cpu()
+    if hasattr(value, "tolist"):
+        return value.tolist()
+    return list(value)
