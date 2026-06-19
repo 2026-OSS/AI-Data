@@ -13,7 +13,7 @@ def convert_page_prediction(
     if len(probabilities) != len(class_names):
         raise ValueError("probabilities and class_names must have the same length")
 
-    if not probabilities:
+    if len(probabilities) == 0:
         raise ValueError("probabilities must not be empty")
 
     best_index = max(range(len(probabilities)), key=lambda index: probabilities[index])

@@ -7,12 +7,33 @@ from server.page_response import (
 )
 
 
+class ArrayLikeProbabilities:
+    def __init__(self, values):
+        self.values = values
+
+    def __len__(self):
+        return len(self.values)
+
+    def __getitem__(self, index):
+        return self.values[index]
+
+    def __bool__(self):
+        raise ValueError("truth value is ambiguous")
+
+
 class PageResponseTest(unittest.TestCase):
     def test_default_page_class_order(self):
         self.assertEqual(DEFAULT_PAGE_CLASSES, ["none", "page1", "page2", "page3"])
 
     def test_convert_page_prediction_to_backend_page(self):
         page = convert_page_prediction([0.05, 0.1, 0.8, 0.05])
+
+        self.assertEqual(page, {"label": "page2", "confidence": 0.8})
+
+    def test_convert_array_like_page_prediction_to_backend_page(self):
+        page = convert_page_prediction(
+            ArrayLikeProbabilities([0.05, 0.1, 0.8, 0.05])
+        )
 
         self.assertEqual(page, {"label": "page2", "confidence": 0.8})
 
