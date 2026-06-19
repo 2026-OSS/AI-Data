@@ -16,13 +16,15 @@ fi
 
 export ROBOFLOW_WORKSPACE="${ROBOFLOW_WORKSPACE:-2026-oss}"
 export ROBOFLOW_PROJECT="${ROBOFLOW_PROJECT:-ai-picture-book-object-detection}"
-export ROBOFLOW_VERSION="${ROBOFLOW_VERSION:-12}"
+export ROBOFLOW_VERSION="${ROBOFLOW_VERSION:-13}"
 export MODEL_NAME="${MODEL_NAME:-yolo11n.pt}"
 export RUN_NAME="${RUN_NAME:-picture_book_yolo11n_v${ROBOFLOW_VERSION}}"
 export IMG_SIZE="${IMG_SIZE:-640}"
-export BATCH_SIZE="${BATCH_SIZE:-16}"
-export EPOCHS="${EPOCHS:-100}"
+export BATCH_SIZE="${BATCH_SIZE:-64}"
+export EPOCHS="${EPOCHS:-150}"
 export CUDA_DEVICE="${CUDA_DEVICE:-0}"
+export SEED="${SEED:-42}"
+export PATIENCE="${PATIENCE:-30}"
 export DATASET_NAME="AI-Picture-Book-Object-Detection-${ROBOFLOW_VERSION}"
 
 cd "$ROOT_DIR"
@@ -101,7 +103,13 @@ train_results = model.train(
     epochs=int(os.environ["EPOCHS"]),
     batch=int(os.environ["BATCH_SIZE"]),
     name=os.environ["RUN_NAME"],
+    project="runs/detect",
     device=int(os.environ["CUDA_DEVICE"]),
+    seed=int(os.environ["SEED"]),
+    deterministic=True,
+    patience=int(os.environ["PATIENCE"]),
+    cos_lr=True,
+    cache=True,
 )
 
 save_dir = Path(train_results.save_dir)
