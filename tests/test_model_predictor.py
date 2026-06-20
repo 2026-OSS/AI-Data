@@ -61,9 +61,15 @@ class FakeTensorflow:
 
 
 class ModelPredictorTest(unittest.TestCase):
-    def test_uses_yolo11_v12_as_default(self):
-        self.assertEqual(str(DEFAULT_YOLO_MODEL_PATH), "artifacts/yolo11-v12/best.pt")
-        self.assertEqual(str(DEFAULT_YOLO_DATA_YAML), "artifacts/yolo11-v12/data.yaml")
+    def test_uses_yolo11_v15_as_default(self):
+        self.assertEqual(
+            str(DEFAULT_YOLO_MODEL_PATH),
+            "artifacts/yolo11-v15/weights/best.pt",
+        )
+        self.assertEqual(
+            str(DEFAULT_YOLO_DATA_YAML),
+            "artifacts/yolo11-v15/configs/data.yaml",
+        )
         self.assertEqual(
             str(DEFAULT_HAND_LANDMARKER_MODEL_PATH),
             "artifacts/hand-landmarker/hand_landmarker.task",

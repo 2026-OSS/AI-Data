@@ -63,8 +63,8 @@ SOURCE=1 HAND_MODE=point POINT_MARGIN=40 bash scripts/run_yolo11_webcam.sh
 
 백엔드 연동용 추론 서버는 기본으로 현재 안정 버전 모델을 사용합니다.
 
-- YOLO 모델: `artifacts/yolo11-v12/best.pt`
-- YOLO 클래스 정보: `artifacts/yolo11-v12/data.yaml`
+- YOLO 모델: `artifacts/yolo11-v15/weights/best.pt`
+- YOLO 클래스 정보: `artifacts/yolo11-v15/configs/data.yaml`
 - 페이지 분류 모델: `artifacts/page-classifier-mobilenetv2/page_classifier_mobilenetv2.keras`
 - 손끝 추출 모델: `artifacts/hand-landmarker/hand_landmarker.task`
 
@@ -75,8 +75,8 @@ python3 -m uvicorn server.main:app --host 127.0.0.1 --port 8001
 YOLO 모델 버전이 바뀌면 코드 수정 없이 실행할 때 경로만 바꿉니다.
 
 ```bash
-YOLO_MODEL_PATH=artifacts/yolo11-v13/best.pt \
-YOLO_DATA_YAML=artifacts/yolo11-v13/data.yaml \
+YOLO_MODEL_PATH=artifacts/yolo11-v15/weights/best.pt \
+YOLO_DATA_YAML=artifacts/yolo11-v15/configs/data.yaml \
 python3 -m uvicorn server.main:app --host 127.0.0.1 --port 8001
 ```
 

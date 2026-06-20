@@ -18,8 +18,8 @@ from server.yolo_response import (
 )
 
 
-DEFAULT_YOLO_MODEL_PATH = Path("artifacts/yolo11-v12/best.pt")
-DEFAULT_YOLO_DATA_YAML = Path("artifacts/yolo11-v12/data.yaml")
+DEFAULT_YOLO_MODEL_PATH = Path("artifacts/yolo11-v15/weights/best.pt")
+DEFAULT_YOLO_DATA_YAML = Path("artifacts/yolo11-v15/configs/data.yaml")
 DEFAULT_PAGE_MODEL_PATH = Path(
     "artifacts/page-classifier-mobilenetv2/page_classifier_mobilenetv2.keras"
 )
