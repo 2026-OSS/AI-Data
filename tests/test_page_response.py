@@ -28,14 +28,27 @@ class PageResponseTest(unittest.TestCase):
     def test_convert_page_prediction_to_backend_page(self):
         page = convert_page_prediction([0.05, 0.1, 0.8, 0.05])
 
-        self.assertEqual(page, {"label": "page2", "confidence": 0.8})
+        self.assertEqual(page["label"], "page2")
+        self.assertEqual(page["confidence"], 0.8)
+        self.assertAlmostEqual(page["margin"], 0.7)
+        self.assertEqual(
+            page["top_k"],
+            [
+                {"label": "page2", "confidence": 0.8},
+                {"label": "page1", "confidence": 0.1},
+                {"label": "none", "confidence": 0.05},
+                {"label": "page3", "confidence": 0.05},
+            ],
+        )
 
     def test_convert_array_like_page_prediction_to_backend_page(self):
         page = convert_page_prediction(
             ArrayLikeProbabilities([0.05, 0.1, 0.8, 0.05])
         )
 
-        self.assertEqual(page, {"label": "page2", "confidence": 0.8})
+        self.assertEqual(page["label"], "page2")
+        self.assertEqual(page["confidence"], 0.8)
+        self.assertEqual(page["top_k"][0], {"label": "page2", "confidence": 0.8})
 
     def test_convert_page_label_to_backend_page(self):
         page = convert_page_label("page3", 0.91)

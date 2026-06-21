@@ -55,6 +55,21 @@ class BackendResponseTest(unittest.TestCase):
         self.assertEqual(page["label"], "page3")
         self.assertEqual(detected["label"], "text")
 
+    def test_preserves_page_diagnostics(self):
+        page = normalize_page(
+            {
+                "label": "page1",
+                "confidence": 0.74,
+                "margin": 0.05,
+                "reliable": False,
+                "top_k": [{"label": "page1", "confidence": 0.74}],
+            }
+        )
+
+        self.assertEqual(page["margin"], 0.05)
+        self.assertFalse(page["reliable"])
+        self.assertEqual(page["top_k"][0]["label"], "page1")
+
     def test_rejects_invalid_confidence(self):
         with self.assertRaises(ValueError):
             normalize_page({"label": "page1", "confidence": 1.2})

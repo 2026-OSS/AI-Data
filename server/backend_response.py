@@ -22,10 +22,22 @@ def normalize_page(page: dict[str, Any]) -> dict[str, Any]:
     if not label:
         raise ValueError("page label is required")
 
-    return {
+    normalized = {
         "label": str(label),
         "confidence": _normalize_confidence(confidence),
     }
+    for key in (
+        "margin",
+        "reliable",
+        "raw",
+        "smoothed",
+        "top_k",
+        "debug",
+    ):
+        if key in page:
+            normalized[key] = page[key]
+
+    return normalized
 
 
 def normalize_object(detected: dict[str, Any]) -> dict[str, Any]:

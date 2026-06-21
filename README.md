@@ -32,9 +32,21 @@ bash scripts/run_page_classifier_webcam.sh
 MODEL_PATH=artifacts/page-classifier-mobilenetv2/page_classifier_mobilenetv2.keras SOURCE=1 bash scripts/run_page_classifier_webcam.sh
 ```
 
+웹캠 페이지 분류는 최근 프레임 EMA smoothing, `top1 - top2` margin 검사, 연속 reliable frame 확인을 함께 사용합니다. 페이지가 자주 튀면 `SMOOTHING_ALPHA`를 낮추거나 `STABLE_FRAMES`를 올리고, 애매한 화면에서 label이 너무 쉽게 뜨면 `MARGIN_THRESHOLD`, `THRESHOLD`, `NONE_THRESHOLD`를 올립니다.
+
+```bash
+THRESHOLD=0.65 MARGIN_THRESHOLD=0.20 SMOOTHING_ALPHA=0.25 STABLE_FRAMES=3 bash scripts/run_page_classifier_webcam.sh
+```
+
+산출물에 포함된 class names JSON을 명시해서 실행할 수도 있습니다.
+
+```bash
+LABELS_FILE=artifacts/page-classifier-mobilenetv2/page_classifier_class_names.json bash scripts/run_page_classifier_webcam.sh
+```
+
 ## Webcam YOLO11 Object Detector
 
-`artifacts/yolo11-v11/best.pt` 모델로 웹캠 객체 탐지를 실행할 수 있습니다.
+`artifacts/yolo11-v15/weights/best.pt` 모델로 웹캠 객체 탐지를 실행할 수 있습니다.
 
 ```bash
 cd AI-Data
@@ -56,7 +68,13 @@ HAND_MODE=point bash scripts/run_yolo11_webcam.sh
 이 모드에서는 손끝이 가장 많이 가리킨 객체 하나만 화면에 표시됩니다. 손끝 판정 범위가 너무 빡빡하거나 넓으면 `POINT_MARGIN` 값을 조절합니다.
 
 ```bash
-SOURCE=1 HAND_MODE=point POINT_MARGIN=40 bash scripts/run_yolo11_webcam.sh
+SOURCE=1 HAND_MODE=point POINT_MARGIN=60 bash scripts/run_yolo11_webcam.sh
+```
+
+객체가 잘 안 잡히면 confidence를 낮추거나 입력 크기를 키워 작은 객체 감도를 올릴 수 있습니다. 기본값은 `CONF=0.15`, `IMG_SIZE=960`, `POINT_MARGIN=50`입니다.
+
+```bash
+SOURCE=1 CONF=0.10 IMG_SIZE=960 POINT_MARGIN=60 bash scripts/run_yolo11_webcam.sh
 ```
 
 ## Predict API Server
@@ -71,6 +89,28 @@ SOURCE=1 HAND_MODE=point POINT_MARGIN=40 bash scripts/run_yolo11_webcam.sh
 ```bash
 python3 -m uvicorn server.main:app --host 127.0.0.1 --port 8001
 ```
+
+기본 모델 경로는 프로젝트 루트 기준으로 해석되므로, 다른 폴더에서 실행해도 기본 산출물은 동일하게 찾습니다.
+환경변수로 상대경로를 지정할 때도 `AI-Data` 루트 기준 경로를 사용합니다.
+
+서버 추론도 기본적으로 웹캠 테스트와 같은 감도 설정을 사용합니다.
+`/predict`는 YOLO 객체 검출 결과 전체와 손끝 좌표를 반환하고, 손끝-객체 매칭은 백엔드 `/api/interaction/detect`에서 처리합니다.
+
+- `YOLO_CONF=0.15`: YOLO confidence threshold
+- `YOLO_IMGSZ=960`: YOLO inference image size
+- `HAND_MIN_DETECTION_CONFIDENCE=0.4`: 손 검출 confidence
+- `HAND_MIN_PRESENCE_CONFIDENCE=0.4`: 손 존재 confidence
+- `HAND_MIN_TRACKING_CONFIDENCE=0.4`: 손 추적 confidence
+- `PAGE_CONFIDENCE_THRESHOLD=0.75`: 페이지 label을 신뢰할 최소 confidence
+- `PAGE_MARGIN_THRESHOLD=0.15`: 페이지 `top1 - top2` 최소 margin
+- `PAGE_SMOOTHING_ALPHA=0.35`: 최신 페이지 예측을 EMA에 반영하는 비율
+- `PAGE_STABLE_FRAMES=2`: 같은 reliable page가 연속으로 나와야 확정하는 최소 frame 수
+- `PAGE_NONE_CONFIDENCE_THRESHOLD`: `none` 클래스에만 적용할 별도 confidence threshold
+- `PAGE_CLASSES_FILE`: JSON 또는 line-based text class names 파일 경로
+
+오탐이 늘면 `YOLO_CONF`를 `0.20~0.25`로 올리고, 작은 객체를 더 잡아야 하면 `YOLO_CONF=0.10` 또는 `YOLO_IMGSZ=1280`을 시도합니다.
+
+페이지 예측이 불안정하면 AI 서버는 `/predict` 응답의 `page`에 `top_k`, `margin`, `raw`, `smoothed`, `reliable`을 함께 넣습니다. `reliable=false`이면 마지막으로 확정된 label을 유지하되 confidence를 threshold 아래로 낮춰 BE fallback이 작동하게 합니다.
 
 YOLO 모델 버전이 바뀌면 코드 수정 없이 실행할 때 경로만 바꿉니다.
 
