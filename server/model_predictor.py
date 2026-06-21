@@ -73,6 +73,8 @@ class ModelPredictor:
         hand_min_detection_confidence: float = 0.4,
         hand_min_presence_confidence: float = 0.4,
         hand_min_tracking_confidence: float = 0.4,
+        finger_smoothing_alpha: float = 0.55,
+        finger_missing_grace_frames: int = 2,
         page_confidence_threshold: float = 0.75,
         page_margin_threshold: float = 0.15,
         page_smoothing_alpha: float = 0.35,
@@ -95,6 +97,8 @@ class ModelPredictor:
         self.hand_min_detection_confidence = hand_min_detection_confidence
         self.hand_min_presence_confidence = hand_min_presence_confidence
         self.hand_min_tracking_confidence = hand_min_tracking_confidence
+        self.finger_smoothing_alpha = finger_smoothing_alpha
+        self.finger_missing_grace_frames = max(int(finger_missing_grace_frames), 0)
         self.page_confidence_threshold = page_confidence_threshold
         self.page_margin_threshold = page_margin_threshold
         self.page_smoothing_alpha = page_smoothing_alpha
@@ -104,6 +108,8 @@ class ModelPredictor:
         self._page_candidate_label: str | None = None
         self._page_candidate_count = 0
         self._accepted_page_label: str | None = None
+        self._finger_ema: dict[str, float] | None = None
+        self._finger_missing_count = 0
 
         self._cv2 = _import_dependency("cv2", "opencv-python")
         self._np = _import_dependency("numpy", "numpy")
@@ -174,6 +180,10 @@ class ModelPredictor:
             ),
             hand_min_tracking_confidence=float(
                 os.getenv("HAND_MIN_TRACKING_CONFIDENCE", "0.4")
+            ),
+            finger_smoothing_alpha=float(os.getenv("FINGER_SMOOTHING_ALPHA", "0.55")),
+            finger_missing_grace_frames=int(
+                os.getenv("FINGER_MISSING_GRACE_FRAMES", "2")
             ),
             page_confidence_threshold=float(
                 os.getenv("PAGE_CONFIDENCE_THRESHOLD", "0.75")
@@ -279,7 +289,33 @@ class ModelPredictor:
             data=rgb_image,
         )
         results = self.hands.detect(mp_image)
-        return extract_finger_from_results(results, width, height)
+        finger = extract_finger_from_results(results, width, height)
+        return self._smooth_finger(finger)
+
+    def _smooth_finger(self, finger: dict[str, float] | None) -> dict[str, float] | None:
+        if finger is None:
+            if (
+                self._finger_ema is not None
+                and self._finger_missing_count < self.finger_missing_grace_frames
+            ):
+                self._finger_missing_count += 1
+                return dict(self._finger_ema)
+
+            self._finger_ema = None
+            self._finger_missing_count = 0
+            return None
+
+        alpha = min(max(self.finger_smoothing_alpha, 0.0), 1.0)
+        if self._finger_ema is None:
+            self._finger_ema = {"x": float(finger["x"]), "y": float(finger["y"])}
+        else:
+            self._finger_ema = {
+                "x": alpha * float(finger["x"]) + (1.0 - alpha) * self._finger_ema["x"],
+                "y": alpha * float(finger["y"]) + (1.0 - alpha) * self._finger_ema["y"],
+            }
+
+        self._finger_missing_count = 0
+        return dict(self._finger_ema)
 
     def _prepare_page_input(self, image: Any) -> Any:
         input_shape = self.page_model.input_shape

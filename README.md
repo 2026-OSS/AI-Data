@@ -101,6 +101,8 @@ python3 -m uvicorn server.main:app --host 127.0.0.1 --port 8001
 - `HAND_MIN_DETECTION_CONFIDENCE=0.4`: 손 검출 confidence
 - `HAND_MIN_PRESENCE_CONFIDENCE=0.4`: 손 존재 confidence
 - `HAND_MIN_TRACKING_CONFIDENCE=0.4`: 손 추적 confidence
+- `FINGER_SMOOTHING_ALPHA=0.55`: 손끝 좌표 EMA smoothing 비율
+- `FINGER_MISSING_GRACE_FRAMES=2`: 손끝이 잠깐 끊겨도 마지막 좌표를 유지할 frame 수
 - `PAGE_CONFIDENCE_THRESHOLD=0.75`: 페이지 label을 신뢰할 최소 confidence
 - `PAGE_MARGIN_THRESHOLD=0.15`: 페이지 `top1 - top2` 최소 margin
 - `PAGE_SMOOTHING_ALPHA=0.35`: 최신 페이지 예측을 EMA에 반영하는 비율
