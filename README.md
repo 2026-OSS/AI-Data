@@ -19,7 +19,7 @@
 
 ## Webcam Page Classifier
 
-`artifacts/page-classifier-mobilenetv2/page_classifier_mobilenetv2.keras` 모델로 웹캠 페이지 분류를 실행할 수 있습니다.
+`artifacts/page-classifier-mobilenetv2-v2/page_classifier_mobilenetv2.keras` 모델로 웹캠 페이지 분류를 실행할 수 있습니다.
 
 ```bash
 cd AI-Data
@@ -29,7 +29,7 @@ bash scripts/run_page_classifier_webcam.sh
 기본 클래스 순서는 훈련 노트북 기준 `none,page1,page2,page3`입니다. 다른 모델이나 카메라를 쓸 때는 환경변수로 바꿀 수 있습니다.
 
 ```bash
-MODEL_PATH=artifacts/page-classifier-mobilenetv2/page_classifier_mobilenetv2.keras SOURCE=1 bash scripts/run_page_classifier_webcam.sh
+MODEL_PATH=artifacts/page-classifier-mobilenetv2-v2/page_classifier_mobilenetv2.keras SOURCE=1 bash scripts/run_page_classifier_webcam.sh
 ```
 
 웹캠 페이지 분류는 최근 프레임 EMA smoothing, `top1 - top2` margin 검사, 연속 reliable frame 확인을 함께 사용합니다. 페이지가 자주 튀면 `SMOOTHING_ALPHA`를 낮추거나 `STABLE_FRAMES`를 올리고, 애매한 화면에서 label이 너무 쉽게 뜨면 `MARGIN_THRESHOLD`, `THRESHOLD`, `NONE_THRESHOLD`를 올립니다.
@@ -41,7 +41,7 @@ THRESHOLD=0.65 MARGIN_THRESHOLD=0.20 SMOOTHING_ALPHA=0.25 STABLE_FRAMES=3 bash s
 산출물에 포함된 class names JSON을 명시해서 실행할 수도 있습니다.
 
 ```bash
-LABELS_FILE=artifacts/page-classifier-mobilenetv2/page_classifier_class_names.json bash scripts/run_page_classifier_webcam.sh
+LABELS_FILE=artifacts/page-classifier-mobilenetv2-v2/page_classifier_class_names.json bash scripts/run_page_classifier_webcam.sh
 ```
 
 ## Webcam YOLO11 Object Detector
@@ -83,7 +83,7 @@ SOURCE=1 CONF=0.10 IMG_SIZE=960 POINT_MARGIN=60 bash scripts/run_yolo11_webcam.s
 
 - YOLO 모델: `artifacts/yolo11-v15/weights/best.pt`
 - YOLO 클래스 정보: `artifacts/yolo11-v15/configs/data.yaml`
-- 페이지 분류 모델: `artifacts/page-classifier-mobilenetv2/page_classifier_mobilenetv2.keras`
+- 페이지 분류 모델: `artifacts/page-classifier-mobilenetv2-v2/page_classifier_mobilenetv2.keras`
 - 손끝 추출 모델: `artifacts/hand-landmarker/hand_landmarker.task`
 
 ```bash
@@ -123,7 +123,7 @@ python3 -m uvicorn server.main:app --host 127.0.0.1 --port 8001
 페이지 모델이나 손끝 추출 모델을 바꿀 때도 같은 방식으로 환경변수를 지정합니다.
 
 ```bash
-PAGE_MODEL_PATH=artifacts/page-classifier-mobilenetv2/page_classifier_mobilenetv2.keras \
+PAGE_MODEL_PATH=artifacts/page-classifier-mobilenetv2-v2/page_classifier_mobilenetv2.keras \
 HAND_LANDMARKER_MODEL_PATH=artifacts/hand-landmarker/hand_landmarker.task \
 python3 -m uvicorn server.main:app --host 127.0.0.1 --port 8001
 ```

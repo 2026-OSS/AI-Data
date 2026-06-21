@@ -47,7 +47,7 @@ def _optional_int_from_env(name: str) -> int | None:
 DEFAULT_YOLO_MODEL_PATH = _project_path("artifacts/yolo11-v15/weights/best.pt")
 DEFAULT_YOLO_DATA_YAML = _project_path("artifacts/yolo11-v15/configs/data.yaml")
 DEFAULT_PAGE_MODEL_PATH = _project_path(
-    "artifacts/page-classifier-mobilenetv2/page_classifier_mobilenetv2.keras"
+    "artifacts/page-classifier-mobilenetv2-v2/page_classifier_mobilenetv2.keras"
 )
 DEFAULT_HAND_LANDMARKER_MODEL_PATH = _project_path(
     "artifacts/hand-landmarker/hand_landmarker.task"
@@ -423,24 +423,49 @@ def _point_distance_to_bbox(finger: dict[str, Any], bbox: list[float]) -> float:
 
 def _load_keras_model(tensorflow: Any, model_path: Path) -> Any:
     try:
-        return tensorflow.keras.models.load_model(str(model_path))
+        return _keras_load_model(tensorflow.keras, model_path)
     except TypeError as exc:
-        if "quantization_config" not in str(exc):
+        if not _is_keras_config_compatibility_error(exc):
             raise
 
         with tempfile.TemporaryDirectory() as tmpdir:
             patched_path = Path(tmpdir) / model_path.name
-            _copy_keras_model_without_quantization_config(model_path, patched_path)
-            return tensorflow.keras.models.load_model(str(patched_path))
+            _copy_compatible_keras_model(model_path, patched_path)
+            try:
+                return _keras_load_model(tensorflow.keras, patched_path)
+            except (AttributeError, TypeError):
+                return _load_mobilenetv2_page_classifier_from_weights(
+                    tensorflow,
+                    model_path,
+                    Path(tmpdir),
+                )
 
 
-def _copy_keras_model_without_quantization_config(
+def _keras_load_model(keras: Any, model_path: Path) -> Any:
+    try:
+        return keras.models.load_model(str(model_path), compile=False)
+    except TypeError as exc:
+        if "compile" not in str(exc):
+            raise
+        return keras.models.load_model(str(model_path))
+
+
+def _is_keras_config_compatibility_error(exc: TypeError) -> bool:
+    message = str(exc)
+    return (
+        "quantization_config" in message
+        or "batch_shape" in message
+        or "optional" in message
+    )
+
+
+def _copy_compatible_keras_model(
     source_path: Path,
     target_path: Path,
 ) -> None:
     with zipfile.ZipFile(source_path, "r") as source_zip:
         config = json.loads(source_zip.read("config.json"))
-        _remove_key(config, "quantization_config")
+        _patch_keras_config_for_older_loaders(config)
 
         with zipfile.ZipFile(target_path, "w") as target_zip:
             for info in source_zip.infolist():
@@ -453,14 +478,75 @@ def _copy_keras_model_without_quantization_config(
                     target_zip.writestr(info, source_zip.read(info.filename))
 
 
-def _remove_key(value: Any, key: str) -> None:
+def _load_mobilenetv2_page_classifier_from_weights(
+    tensorflow: Any,
+    model_path: Path,
+    temp_dir: Path,
+) -> Any:
+    with zipfile.ZipFile(model_path, "r") as model_zip:
+        config = json.loads(model_zip.read("config.json"))
+        input_shape = _page_classifier_input_shape_from_config(config)
+        num_classes = _page_classifier_num_classes_from_config(config)
+        model_zip.extract("model.weights.h5", temp_dir)
+
+    keras = tensorflow.keras
+    base_model = keras.applications.MobileNetV2(
+        input_shape=input_shape,
+        include_top=False,
+        weights=None,
+    )
+    base_model.trainable = False
+    model = keras.Sequential(
+        [
+            keras.layers.Rescaling(1.0 / 127.5, offset=-1),
+            base_model,
+            keras.layers.GlobalAveragePooling2D(),
+            keras.layers.Dropout(0.3),
+            keras.layers.Dense(num_classes, activation="softmax"),
+        ]
+    )
+    model.build((None, *input_shape))
+    model.load_weights(str(temp_dir / "model.weights.h5"))
+    return model
+
+
+def _page_classifier_input_shape_from_config(config: dict[str, Any]) -> tuple[int, int, int]:
+    for layer in config.get("config", {}).get("layers", []):
+        if layer.get("class_name") == "InputLayer":
+            shape = layer.get("config", {}).get("batch_shape")
+            if isinstance(shape, list) and len(shape) == 4:
+                return int(shape[1]), int(shape[2]), int(shape[3])
+    return (224, 224, 3)
+
+
+def _page_classifier_num_classes_from_config(config: dict[str, Any]) -> int:
+    for layer in config.get("config", {}).get("layers", []):
+        if layer.get("class_name") == "Dense":
+            units = layer.get("config", {}).get("units")
+            if units is not None:
+                return int(units)
+    return len(DEFAULT_PAGE_CLASSES)
+
+
+def _patch_keras_config_for_older_loaders(value: Any) -> None:
     if isinstance(value, dict):
-        value.pop(key, None)
+        value.pop("quantization_config", None)
+        if value.get("class_name") == "InputLayer" and isinstance(
+            value.get("config"), dict
+        ):
+            layer_config = value["config"]
+            if "batch_shape" in layer_config:
+                layer_config["batch_input_shape"] = layer_config.pop("batch_shape")
+            layer_config.pop("optional", None)
+        if isinstance(value.get("dtype"), dict):
+            dtype_config = value["dtype"]
+            if dtype_config.get("class_name") == "DTypePolicy":
+                value["dtype"] = dtype_config.get("config", {}).get("name", "float32")
         for child in value.values():
-            _remove_key(child, key)
+            _patch_keras_config_for_older_loaders(child)
     elif isinstance(value, list):
         for child in value:
-            _remove_key(child, key)
+            _patch_keras_config_for_older_loaders(child)
 
 
 def _import_dependency(module_name: str, package_name: str) -> Any:
