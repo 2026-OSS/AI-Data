@@ -2,22 +2,24 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-MODEL_PATH="${MODEL_PATH:-$ROOT_DIR/artifacts/yolo11-v14}"
+MODEL_PATH="${MODEL_PATH:-$ROOT_DIR/artifacts/yolo11-v15}"
 CAMERA="${CAMERA:-builtin}"
 PHONE_SOURCE="${PHONE_SOURCE:-1}"
 PHONE_URL="${PHONE_URL:-}"
 SOURCE="${SOURCE:-}"
-CONDA_ENV="${CONDA_ENV:-pytorch_mnist}"
-IMG_SIZE="${IMG_SIZE:-640}"
-CONF="${CONF:-0.25}"
+CONDA_ENV="${CONDA_ENV:-}"
+PYTHON_BIN="${PYTHON_BIN:-python}"
+IMG_SIZE="${IMG_SIZE:-960}"
+CONF="${CONF:-0.15}"
 DEVICE="${DEVICE:-}"
 INFER_STRIDE="${INFER_STRIDE:-1}"
 HAND_MODE="${HAND_MODE:-point}"
 POINT_HOLD_SECONDS="${POINT_HOLD_SECONDS:-3.0}"
 POINT_RESET_SECONDS="${POINT_RESET_SECONDS:-0.7}"
-POINT_MARGIN="${POINT_MARGIN:-30}"
-HAND_CONF="${HAND_CONF:-0.5}"
-HAND_TRACK_CONF="${HAND_TRACK_CONF:-0.5}"
+POINT_MARGIN="${POINT_MARGIN:-50}"
+HAND_CONF="${HAND_CONF:-0.4}"
+HAND_TRACK_CONF="${HAND_TRACK_CONF:-0.4}"
+HAND_MODEL_PATH="${HAND_MODEL_PATH:-$ROOT_DIR/artifacts/hand-landmarker/hand_landmarker.task}"
 
 if [[ -d "$MODEL_PATH" ]]; then
   if [[ -f "$MODEL_PATH/best.pt" ]]; then
@@ -77,9 +79,10 @@ if command -v conda >/dev/null 2>&1 && [[ -n "$CONDA_ENV" ]]; then
     --point-reset-seconds "$POINT_RESET_SECONDS" \
     --point-margin "$POINT_MARGIN" \
     --hand-conf "$HAND_CONF" \
-    --hand-track-conf "$HAND_TRACK_CONF"
+    --hand-track-conf "$HAND_TRACK_CONF" \
+    --hand-model "$HAND_MODEL_PATH"
 else
-  "${PYTHON_BIN:-python3}" "$ROOT_DIR/scripts/yolo11_webcam.py" \
+  "$PYTHON_BIN" "$ROOT_DIR/scripts/yolo11_webcam.py" \
     --model "$MODEL_PATH" \
     --source "$SOURCE" \
     --imgsz "$IMG_SIZE" \
@@ -91,5 +94,6 @@ else
     --point-reset-seconds "$POINT_RESET_SECONDS" \
     --point-margin "$POINT_MARGIN" \
     --hand-conf "$HAND_CONF" \
-    --hand-track-conf "$HAND_TRACK_CONF"
+    --hand-track-conf "$HAND_TRACK_CONF" \
+    --hand-model "$HAND_MODEL_PATH"
 fi

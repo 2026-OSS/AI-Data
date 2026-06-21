@@ -6,7 +6,11 @@ from pathlib import Path
 
 
 DEFAULT_MODEL_PATH = (
-    Path(__file__).resolve().parents[1] / "artifacts/yolo11-v14/weights/best.pt"
+    Path(__file__).resolve().parents[1] / "artifacts/yolo11-v15/weights/best.pt"
+)
+DEFAULT_HAND_MODEL_PATH = (
+    Path(__file__).resolve().parents[1]
+    / "artifacts/hand-landmarker/hand_landmarker.task"
 )
 
 
@@ -61,7 +65,64 @@ def load_mediapipe():
             "or:\n"
             "  conda run -n pytorch_mnist pip install mediapipe"
         ) from exc
+    if not hasattr(mp, "solutions"):
+        try:
+            import mediapipe.solutions as solutions
+        except ImportError:
+            solutions = None
+        if solutions is not None:
+            mp.solutions = solutions
     return mp
+
+
+def create_hand_tracker(mp, args):
+    if hasattr(mp, "solutions"):
+        hands = mp.solutions.hands.Hands(
+            static_image_mode=False,
+            max_num_hands=1,
+            model_complexity=0,
+            min_detection_confidence=args.hand_conf,
+            min_tracking_confidence=args.hand_track_conf,
+        )
+        return {
+            "api": "solutions",
+            "hands": hands,
+            "solutions": mp.solutions,
+            "drawer": mp.solutions.drawing_utils,
+            "styles": mp.solutions.drawing_styles,
+        }
+
+    hand_model = Path(args.hand_model)
+    if not hand_model.exists():
+        raise SystemExit(f"Hand landmarker model not found: {hand_model}")
+
+    try:
+        base_options = mp.tasks.BaseOptions(
+            model_asset_path=str(hand_model),
+            delegate=mp.tasks.BaseOptions.Delegate.CPU,
+        )
+        options = mp.tasks.vision.HandLandmarkerOptions(
+            base_options=base_options,
+            running_mode=mp.tasks.vision.RunningMode.IMAGE,
+            num_hands=1,
+            min_hand_detection_confidence=args.hand_conf,
+            min_hand_presence_confidence=args.hand_conf,
+            min_tracking_confidence=args.hand_track_conf,
+        )
+        hands = mp.tasks.vision.HandLandmarker.create_from_options(options)
+    except AttributeError as exc:
+        raise SystemExit(
+            "This mediapipe installation does not provide either "
+            "mediapipe.solutions.hands or mediapipe.tasks.vision.HandLandmarker.\n"
+            "Install a compatible package in the active environment:\n"
+            "  pip install --upgrade mediapipe"
+        ) from exc
+
+    return {
+        "api": "tasks",
+        "hands": hands,
+        "module": mp,
+    }
 
 
 def result_to_detections(result):
@@ -132,6 +193,24 @@ def draw_detections(frame, detections, names, pointed_detection=None):
 
 def find_index_fingertip(mp, frame):
     rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+    if mp["api"] == "tasks":
+        module = mp["module"]
+        mp_image = module.Image(
+            image_format=module.ImageFormat.SRGB,
+            data=rgb,
+        )
+        results = mp["hands"].detect(mp_image)
+        if not results.hand_landmarks:
+            return None, False
+
+        landmark = results.hand_landmarks[0][8]
+        height, width = frame.shape[:2]
+        fingertip = (int(landmark.x * width), int(landmark.y * height))
+        cv2.circle(mp["display"], fingertip, 9, (0, 210, 255), -1)
+        cv2.circle(mp["display"], fingertip, 13, (0, 0, 0), 2)
+        return fingertip, True
+
     results = mp["hands"].process(rgb)
     if not results.multi_hand_landmarks:
         return None, False
@@ -265,7 +344,7 @@ def run(args):
     if not model_path.exists():
         raise SystemExit(f"Model file not found: {model_path}")
 
-    mp_solutions = load_mediapipe() if args.hand_mode == "point" else None
+    mp_module = load_mediapipe() if args.hand_mode == "point" else None
     model = YOLO(str(model_path))
     cap = cv2.VideoCapture(parse_source(args.source))
     if not cap.isOpened():
@@ -290,15 +369,9 @@ def run(args):
     pointing_samples = deque()
     last_pointed_at = None
     selected_label = None
-    hands = None
+    hand_tracker = None
     if args.hand_mode == "point":
-        hands = mp_solutions.solutions.hands.Hands(
-            static_image_mode=False,
-            max_num_hands=1,
-            model_complexity=0,
-            min_detection_confidence=args.hand_conf,
-            min_tracking_confidence=args.hand_track_conf,
-        )
+        hand_tracker = create_hand_tracker(mp_module, args)
 
     try:
         while True:
@@ -328,13 +401,8 @@ def run(args):
             display_detections = detections
             display_detection = None
             if args.hand_mode == "point":
-                mp_context = {
-                    "display": display,
-                    "hands": hands,
-                    "solutions": mp_solutions.solutions,
-                    "drawer": mp_solutions.solutions.drawing_utils,
-                    "styles": mp_solutions.solutions.drawing_styles,
-                }
+                mp_context = dict(hand_tracker)
+                mp_context["display"] = display
                 fingertip, hand_detected = find_index_fingertip(mp_context, frame)
                 pointed_detection = detection_at_point(detections, fingertip, args.point_margin)
                 if pointed_detection is not None:
@@ -380,8 +448,8 @@ def run(args):
             elif key in (ord("q"), 27):
                 break
     finally:
-        if hands is not None:
-            hands.close()
+        if hand_tracker is not None:
+            hand_tracker["hands"].close()
         cap.release()
         cv2.destroyAllWindows()
 
@@ -394,16 +462,17 @@ def parse_args():
         help="Path to a YOLO11 .pt model or artifact directory.",
     )
     parser.add_argument("--source", default="0", help="Camera index, video path, or stream URL.")
-    parser.add_argument("--conf", type=float, default=0.25, help="Confidence threshold.")
-    parser.add_argument("--imgsz", type=int, default=640, help="Inference image size.")
+    parser.add_argument("--conf", type=float, default=0.15, help="Confidence threshold.")
+    parser.add_argument("--imgsz", type=int, default=960, help="Inference image size.")
     parser.add_argument("--device", default="", help="Device, e.g. cpu, mps, or 0.")
     parser.add_argument("--infer-stride", type=int, default=1, help="Run inference every N frames.")
     parser.add_argument("--hand-mode", choices=("off", "point"), default="point", help="Use off for plain detection, point for fingertip selection.")
     parser.add_argument("--point-hold-seconds", type=float, default=3.0, help="Seconds to vote while pointing.")
     parser.add_argument("--point-reset-seconds", type=float, default=0.7, help="Seconds before clearing votes when not pointing.")
-    parser.add_argument("--point-margin", type=int, default=30, help="Pixel margin around boxes that still counts as pointing.")
-    parser.add_argument("--hand-conf", type=float, default=0.5, help="MediaPipe hand detection confidence.")
-    parser.add_argument("--hand-track-conf", type=float, default=0.5, help="MediaPipe hand tracking confidence.")
+    parser.add_argument("--point-margin", type=int, default=50, help="Pixel margin around boxes that still counts as pointing.")
+    parser.add_argument("--hand-conf", type=float, default=0.4, help="MediaPipe hand detection confidence.")
+    parser.add_argument("--hand-track-conf", type=float, default=0.4, help="MediaPipe hand tracking confidence.")
+    parser.add_argument("--hand-model", default=str(DEFAULT_HAND_MODEL_PATH), help="MediaPipe task hand landmarker model.")
     parser.add_argument("--width", type=int, default=0, help="Optional camera capture width.")
     parser.add_argument("--height", type=int, default=0, help="Optional camera capture height.")
     parser.add_argument("--window-name", default="yolo11-webcam", help="OpenCV window name.")
