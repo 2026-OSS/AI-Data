@@ -181,8 +181,8 @@ class ModelPredictor:
             page_margin_threshold=float(os.getenv("PAGE_MARGIN_THRESHOLD", "0.15")),
             page_smoothing_alpha=float(os.getenv("PAGE_SMOOTHING_ALPHA", "0.35")),
             page_stable_frames=int(os.getenv("PAGE_STABLE_FRAMES", "2")),
-            page_none_confidence_threshold=_optional_float_from_env(
-                "PAGE_NONE_CONFIDENCE_THRESHOLD"
+            page_none_confidence_threshold=float(
+                os.getenv("PAGE_NONE_CONFIDENCE_THRESHOLD", "0.90")
             ),
         )
 

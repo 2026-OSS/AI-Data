@@ -1,3 +1,4 @@
+import os
 import unittest
 import json
 import tempfile
@@ -361,6 +362,13 @@ class ModelPredictorTest(unittest.TestCase):
         )
 
         self.assertFalse(reliable)
+
+    def test_create_from_env_uses_default_none_threshold(self):
+        with patch.dict(os.environ, {}, clear=False):
+            with patch.object(ModelPredictor, "__init__", return_value=None) as mock_init:
+                ModelPredictor.from_env()
+
+        self.assertEqual(mock_init.call_args.kwargs["page_none_confidence_threshold"], 0.9)
 
     def test_loads_page_classes_from_json_file(self):
         with tempfile.TemporaryDirectory() as tmpdir:

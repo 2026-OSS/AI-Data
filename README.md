@@ -105,7 +105,7 @@ python3 -m uvicorn server.main:app --host 127.0.0.1 --port 8001
 - `PAGE_MARGIN_THRESHOLD=0.15`: 페이지 `top1 - top2` 최소 margin
 - `PAGE_SMOOTHING_ALPHA=0.35`: 최신 페이지 예측을 EMA에 반영하는 비율
 - `PAGE_STABLE_FRAMES=2`: 같은 reliable page가 연속으로 나와야 확정하는 최소 frame 수
-- `PAGE_NONE_CONFIDENCE_THRESHOLD`: `none` 클래스에만 적용할 별도 confidence threshold
+- `PAGE_NONE_CONFIDENCE_THRESHOLD=0.90`: `none` 클래스에만 적용할 별도 confidence threshold. 기본값은 일반 페이지보다 더 엄격하게 잡아 `none` 오탐을 줄입니다.
 - `PAGE_CLASSES_FILE`: JSON 또는 line-based text class names 파일 경로
 
 오탐이 늘면 `YOLO_CONF`를 `0.20~0.25`로 올리고, 작은 객체를 더 잡아야 하면 `YOLO_CONF=0.10` 또는 `YOLO_IMGSZ=1280`을 시도합니다.
