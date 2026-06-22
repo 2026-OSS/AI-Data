@@ -8,8 +8,6 @@
 
 시각장애 아동이 촉각형 그림책을 손끝으로 가리키면 AI가 페이지와 객체를 인식하고 해당 설명을 음성으로 안내하는 시스템입니다.
 
-<img width="1536" height="1024" alt="flowchart" src="https://github.com/user-attachments/assets/5b023550-2cf4-42cf-a46c-85c10c589053" />
-
 ### Pipeline
 
 1. **Input**
@@ -35,6 +33,8 @@
 5. **Output**
 
    * TTS를 통해 음성 안내 제공
+
+<img width="1536" height="1024" alt="flowchart" src="https://github.com/user-attachments/assets/5b023550-2cf4-42cf-a46c-85c10c589053" />
 
 ## Repository Structure
 
