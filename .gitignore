@@ -1,0 +1,53 @@
+.DS_Store
+.cache/
+.venv/
+__pycache__/
+*.py[cod]
+
+# Keep only backend handoff files in the YOLOv5 v2 artifact directory.
+artifacts/yolov5-v2/*
+!artifacts/yolov5-v2/
+!artifacts/yolov5-v2/README.md
+!artifacts/yolov5-v2/best.pt
+!artifacts/yolov5-v2/data.yaml
+
+# Keep only backend handoff files in the YOLOv5 v6 artifact directory.
+artifacts/yolov5-v6/*
+!artifacts/yolov5-v6/
+!artifacts/yolov5-v6/README.md
+!artifacts/yolov5-v6/best.pt
+!artifacts/yolov5-v6/data.yaml
+
+# Keep only backend handoff files in the YOLO11n v12 artifact directory.
+artifacts/yolo11-v12/*
+!artifacts/yolo11-v12/
+!artifacts/yolo11-v12/README.md
+!artifacts/yolo11-v12/best.pt
+!artifacts/yolo11-v12/data.yaml
+
+# Keep backend handoff files and review images in the YOLO11n v13 artifact directory.
+artifacts/yolo11-v13/*
+!artifacts/yolo11-v13/
+!artifacts/yolo11-v13/README.md
+!artifacts/yolo11-v13/best.pt
+!artifacts/yolo11-v13/data.yaml
+!artifacts/yolo11-v13/results/
+!artifacts/yolo11-v13/results/**
+!artifacts/yolo11-v13/predictions/
+!artifacts/yolo11-v13/predictions/**
+
+# Keep backend handoff files and review images in the YOLO11n v14 artifact directory.
+artifacts/yolo11-v14/*
+!artifacts/yolo11-v14/
+!artifacts/yolo11-v14/README.md
+!artifacts/yolo11-v14/best.pt
+!artifacts/yolo11-v14/data.yaml
+!artifacts/yolo11-v14/results/
+!artifacts/yolo11-v14/results/**
+!artifacts/yolo11-v14/predictions/
+!artifacts/yolo11-v14/predictions/**
+
+# Local YOLOv5 clone and generated outputs
+yolov5/
+
+scripts
