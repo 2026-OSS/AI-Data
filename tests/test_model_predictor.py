@@ -151,6 +151,34 @@ class ModelPredictorTest(unittest.TestCase):
 
         self.assertIsNone(finger)
 
+    def test_smooth_finger_uses_ema(self):
+        predictor = object.__new__(ModelPredictor)
+        predictor.finger_smoothing_alpha = 0.5
+        predictor.finger_missing_grace_frames = 2
+        predictor._finger_ema = None
+        predictor._finger_missing_count = 0
+
+        first = predictor._smooth_finger({"x": 100.0, "y": 200.0})
+        second = predictor._smooth_finger({"x": 120.0, "y": 220.0})
+
+        self.assertEqual(first, {"x": 100.0, "y": 200.0})
+        self.assertEqual(second, {"x": 110.0, "y": 210.0})
+
+    def test_smooth_finger_keeps_last_point_for_short_missing_gap(self):
+        predictor = object.__new__(ModelPredictor)
+        predictor.finger_smoothing_alpha = 0.5
+        predictor.finger_missing_grace_frames = 2
+        predictor._finger_ema = {"x": 140.0, "y": 260.0}
+        predictor._finger_missing_count = 0
+
+        first_missing = predictor._smooth_finger(None)
+        second_missing = predictor._smooth_finger(None)
+        third_missing = predictor._smooth_finger(None)
+
+        self.assertEqual(first_missing, {"x": 140.0, "y": 260.0})
+        self.assertEqual(second_missing, {"x": 140.0, "y": 260.0})
+        self.assertIsNone(third_missing)
+
     def test_predict_preserves_objects_for_backend_matching(self):
         predictor = object.__new__(ModelPredictor)
         predictor._decode_image = lambda image_bytes: "image"
@@ -369,6 +397,8 @@ class ModelPredictorTest(unittest.TestCase):
                 ModelPredictor.from_env()
 
         self.assertEqual(mock_init.call_args.kwargs["page_none_confidence_threshold"], 0.9)
+        self.assertEqual(mock_init.call_args.kwargs["finger_smoothing_alpha"], 0.55)
+        self.assertEqual(mock_init.call_args.kwargs["finger_missing_grace_frames"], 2)
 
     def test_loads_page_classes_from_json_file(self):
         with tempfile.TemporaryDirectory() as tmpdir:
