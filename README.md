@@ -4,6 +4,38 @@
 
 본 레포지토리는 촉각형 그림책 이미지 데이터셋, 페이지 분류 데이터셋, YOLO11 객체 탐지 모델, 페이지 분류 모델, 손끝 추출 모델, 백엔드 연동용 추론 서버를 관리합니다.
 
+## System Overview
+
+시각장애 아동이 촉각형 그림책을 손끝으로 가리키면 AI가 페이지와 객체를 인식하고 해당 설명을 음성으로 안내하는 시스템입니다.
+
+<img width="1536" height="1024" alt="flowchart" src="https://github.com/user-attachments/assets/5b023550-2cf4-42cf-a46c-85c10c589053" />
+
+### Pipeline
+
+1. **Input**
+
+   * 카메라로 그림책과 손 입력
+
+2. **Vision Perception**
+
+   * MobileNetV2 기반 페이지 분류
+   * YOLO11 기반 객체 탐지
+   * MediaPipe 기반 손끝 좌표 추출
+
+3. **Interaction**
+
+   * 손끝 좌표와 객체 위치 매칭
+   * 사용자가 가리키는 객체 선택
+
+4. **Content Retrieval**
+
+   * 페이지 + 객체 조합으로 설명 조회
+   * 이미지, 점자, 텍스트 정보 제공
+
+5. **Output**
+
+   * TTS를 통해 음성 안내 제공
+
 ## Repository Structure
 
 * `docs` : 데이터셋 구조 및 클래스 정의 문서
