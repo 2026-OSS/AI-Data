@@ -13,50 +13,45 @@
 ### Pipeline
 
 1. **Input**
-
-   * 카메라로 그림책과 손 입력
+   - 카메라로 그림책과 손 입력
 
 2. **Vision Perception**
-
-   * MobileNetV2 기반 페이지 분류
-   * YOLO11 기반 객체 탐지
-   * MediaPipe 기반 손끝 좌표 추출
+   - MobileNetV2 기반 페이지 분류
+   - YOLO11 기반 객체 탐지
+   - MediaPipe 기반 손끝 좌표 추출
 
 3. **Interaction**
-
-   * 손끝 좌표와 객체 위치 매칭
-   * 사용자가 가리키는 객체 선택
+   - 손끝 좌표와 객체 위치 매칭
+   - 사용자가 가리키는 객체 선택
 
 4. **Content Retrieval**
-
-   * 페이지 + 객체 조합으로 설명 조회
-   * 이미지, 점자, 텍스트 정보 제공
+   - 페이지 + 객체 조합으로 설명 조회
+   - 이미지, 점자, 텍스트 정보 제공
 
 5. **Output**
-
-   * TTS를 통해 음성 안내 제공
+   - TTS를 통해 음성 안내 제공
 
 <img width="1536" height="1024" alt="flowchart" src="https://github.com/user-attachments/assets/5b023550-2cf4-42cf-a46c-85c10c589053" />
 
 ## Tech Stack
 
-| Area                    | Stack                     |
-| ----------------------- | ------------------------- |
-| Object Detection        | YOLO11n, Ultralytics      |
-| Page Classification     | MobileNetV2, TensorFlow   |
-| Hand Landmark Detection | MediaPipe                 |
-| Dataset Management      | Roboflow                  |
-| Inference Server        | FastAPI, Uvicorn          |
-| Model Experiment        | Google Colab, PyTorch     |
+| Area                    | Stack                   |
+| ----------------------- | ----------------------- |
+| Object Detection        | YOLO11n, Ultralytics    |
+| Page Classification     | MobileNetV2, TensorFlow |
+| Hand Landmark Detection | MediaPipe               |
+| Dataset Management      | Roboflow                |
+| Inference Server        | FastAPI, Uvicorn        |
+| Model Experiment        | Google Colab, PyTorch   |
 
 ## Repository Structure
 
-* `docs` : 데이터셋 구조 및 클래스 정의 문서
-* `dataset` : 학습 데이터셋
-* `notebooks` : 모델 학습 및 실험 노트북
-* `artifacts` : 학습된 모델 및 백엔드 전달용 산출물
-* `scripts` : 웹캠 테스트 실행 스크립트
-* `server` : 백엔드 연동용 Predict API 서버
+- `docs` : 데이터셋 구조 및 클래스 정의 문서
+- `dataset` : 학습 데이터셋
+- `notebooks` : 모델 학습 및 실험 노트북
+- `artifacts` : 학습된 모델 및 백엔드 전달용 산출물
+- `scripts` : 웹캠 테스트 실행 스크립트
+- `server` : 백엔드 연동용 Predict API 서버
 
 ## Datasets
 
@@ -64,56 +59,132 @@
 
 ### Object Detection Dataset
 
-* Dataset: https://universe.roboflow.com/2026-oss/ai-picture-book-object-detection
-* Task: Object Detection
-* Model: YOLO11
+- Dataset: https://universe.roboflow.com/2026-oss/ai-picture-book-object-detection
+- Task: Object Detection
+- Model: YOLO11
 
 #### Classes
 
-| Class               | Description      |
-| ------------------- | ---------------- |
-| `book_flower`       | 그림책 페이지 내 꽃 그림   |
-| `book_flowerpot`    | 그림책 페이지 내 화분 그림  |
+| Class               | Description                  |
+| ------------------- | ---------------------------- |
+| `book_flower`       | 그림책 페이지 내 꽃 그림     |
+| `book_flowerpot`    | 그림책 페이지 내 화분 그림   |
 | `book_monkey`       | 그림책 페이지 내 원숭이 그림 |
-| `book_stone`        | 그림책 페이지 내 돌 그림   |
-| `braille`           | 점자 영역            |
-| `tactile_flower`    | 촉각 교구 꽃          |
-| `tactile_flowerpot` | 촉각 교구 화분         |
-| `tactile_monkey`    | 촉각 교구 원숭이        |
-| `tactile_stone`     | 촉각 교구 돌          |
-| `text`              | 일반 텍스트 영역        |
+| `book_stone`        | 그림책 페이지 내 돌 그림     |
+| `braille`           | 점자 영역                    |
+| `tactile_flower`    | 촉각 교구 꽃                 |
+| `tactile_flowerpot` | 촉각 교구 화분               |
+| `tactile_monkey`    | 촉각 교구 원숭이             |
+| `tactile_stone`     | 촉각 교구 돌                 |
+| `text`              | 일반 텍스트 영역             |
 
 ### Page Classification Dataset
 
-* Dataset: https://universe.roboflow.com/2026-oss/ai-picture-book-page-detection
-* Task: Image Classification
-* Model: MobileNetV2
+- Dataset: https://universe.roboflow.com/2026-oss/ai-picture-book-page-detection
+- Task: Image Classification
+- Model: MobileNetV2
 
 #### Classes
 
-| Class   | Description             |
-| ------- | ----------------------- |
-| `page1` | 그림책 1페이지                |
-| `page2` | 그림책 2페이지                |
-| `page3` | 그림책 3페이지                |
+| Class   | Description                              |
+| ------- | ---------------------------------------- |
+| `page1` | 그림책 1페이지                           |
+| `page2` | 그림책 2페이지                           |
+| `page3` | 그림책 3페이지                           |
 | `none`  | 책이 없거나 페이지를 판별할 수 없는 화면 |
+
+## Page Content Guide
+
+페이지 분류 결과와 객체 탐지 결과를 결합해 사용자에게 안내할 콘텐츠 기준입니다.
+
+### Demonstration Video
+
+| Page    | Video                        |
+| ------- | ---------------------------- |
+| `page1` | https://youtu.be/Alp6did2Irc |
+| `page2` | https://youtu.be/xnNB3q-thUk |
+| `page3` | https://youtu.be/gciueL3Cr3Q |
+
+### Page Storyboard
+
+| Page    | Book Objects            | Tactile Objects          | Text                                                                             |
+| ------- | ----------------------- | ------------------------ | -------------------------------------------------------------------------------- |
+| `page1` | 원숭이, 꽃, 돌          | 원숭이, 꽃, 돌           | 시들어가는 하얀 꽃 한 송이를 발견했어요. 길을 걷던 사람에게 밟혀 다친 것 같아요. |
+| `page2` | 고릴라/원숭이, 화분인형 | 원숭이, 코코넛 화분      | 꼬마 원숭이는 코코넛을 주워 반으로 쪼갠 다음 그 안에 흙을 넣고 꽃을 심었어요.    |
+| `page3` | 화분 인형, 원숭이       | 원숭이, 코코넛 질감 화분 | 여러 날이 지나갔습니다. 꽃은 싱싱하게 살아났어요.                                |
+
+`page2`, `page3`의 화분 촉각 교구는 색종이를 붙여 코코넛의 오돌토돌한 질감을 표현합니다.
+
+### Voice Response Mapping
+
+페이지와 객체 라벨이 매칭되었을 때 TTS로 안내할 기본 문장입니다.
+
+#### Common Messages
+
+| Key                            | Message                                                                |
+| ------------------------------ | ---------------------------------------------------------------------- |
+| `default`                      | 음, 아직 잘 모르겠어. 손끝으로 다시 천천히 가리켜 줘.                  |
+| `matched_description_fallback` | 찾았어. 책 페이지가 더 잘 보이게 다시 비춰 주면 자세히 말해 줄게.      |
+| `camera_not_ready`             | 카메라가 아직 안 켜졌어. 카메라를 켜고 다시 해보자.                    |
+| `no_finger`                    | 손끝이 잘 안 보여. 손을 화면 안에 넣고 다시 가리켜 줘.                 |
+| `no_objects`                   | 책이랑 놀이도구가 잘 안 보여. 카메라 앞에 다시 놓아 줘.                |
+| `not_target_area`              | 여기는 설명할 곳이 아닌 것 같아. 책이나 놀이도구를 손끝으로 가리켜 줘. |
+| `matched`                      | 찾았어.                                                                |
+| `closer`                       | 조금만 더 가까이 가리켜 줘.                                            |
+
+#### Page 1
+
+| Object Label     | Message                                                                              |
+| ---------------- | ------------------------------------------------------------------------------------ |
+| `book_monkey`    | 꼬마 원숭이가 있어.                                                                  |
+| `book_flower`    | 하얀 꽃이 시들어가고 있어.                                                           |
+| `book_stone`     | 돌이 있어. 돌 뒤에 꼬마 원숭이가 숨어 있어.                                          |
+| `tactile_monkey` | 부들부들한 원숭이야. 손끝으로 천천히 만져봐.                                         |
+| `tactile_flower` | 시들어가는 꽃이야. 꽃잎 모양을 손끝으로 만져봐.                                      |
+| `tactile_stone`  | 동글동글한 돌멩이야. 손끝으로 천천히 만져봐.                                         |
+| `braille`        | 점자야. 시들어가는 하얀 꽃 한 송이를 발견했어. 길을 걷던 사람에게 밟혀 다친 것 같아. |
+| `text`           | 시들어가는 하얀 꽃 한 송이를 발견했어. 길을 걷던 사람에게 밟혀 다친 것 같아.         |
+
+#### Page 2
+
+| Object Label        | Message                                                                                     |
+| ------------------- | ------------------------------------------------------------------------------------------- |
+| `book_monkey`       | 꼬마 원숭이가 코코넛 화분에 꽃을 심고 있어.                                                 |
+| `book_flowerpot`    | 코코넛 화분이야. 안에 흙을 담고 꽃을 심었어.                                                |
+| `tactile_monkey`    | 부들부들한 원숭이야. 손끝으로 천천히 만져봐.                                                |
+| `tactile_flowerpot` | 오돌토돌한 코코넛 화분이야. 울퉁불퉁한 곳을 손끝으로 만져봐.                                |
+| `braille`           | 점자 라벨이야. 꼬마 원숭이는 코코넛을 주워 반으로 쪼갠 다음, 그 안에 흙을 넣고 꽃을 심었어. |
+| `text`              | 꼬마 원숭이는 코코넛을 주워 반으로 쪼갠 다음, 그 안에 흙을 넣고 꽃을 심었어.                |
+
+#### Page 3
+
+| Object Label        | Message                                                      |
+| ------------------- | ------------------------------------------------------------ |
+| `book_monkey`       | 꼬마 원숭이가 싱싱해진 꽃 화분을 보고 있어.                  |
+| `book_flower`       | 꽃이 다시 싱싱해졌어.                                        |
+| `book_flowerpot`    | 꽃이 담긴 화분이야. 꼬마 원숭이가 잘 돌봐줬어.               |
+| `tactile_monkey`    | 부들부들한 원숭이야. 손끝으로 원숭이 모양을 느껴봐.          |
+| `tactile_flower`    | 싱싱해진 꽃이야. 꽃잎 모양을 손끝으로 만져봐.                |
+| `tactile_flowerpot` | 오돌토돌한 코코넛 화분이야. 울퉁불퉁한 곳을 손끝으로 만져봐. |
+| `braille`           | 점자 라벨이야. 여러 날이 지나갔어. 꽃은 싱싱하게 살아났어.   |
+| `text`              | 여러 날이 지나갔어. 꽃은 싱싱하게 살아났어.                  |
 
 ## Documents
 
 ### Dataset Guides
 
-* [01_dataset_structure.md](docs/01_dataset_structure.md): 페이지 분류 및 객체 탐지 데이터셋 구조, 클래스 정의, 분할 기준
-* [02_dataset_collection.md](docs/02_dataset_collection.md): 객체 탐지 데이터셋 수집 대상, 촬영 조건, Roboflow 업로드 기준
-* [03_dataset_labeling.md](docs/03_dataset_labeling.md): Bounding Box 라벨링 기준 및 페이지별 객체 음성 설명 매핑
-* [04_dataset_preprocessing_augmentation.md](docs/04_dataset_preprocessing_augmentation.md): 데이터 전처리, 증강, split 검수 및 Roboflow Version 생성 기준
-* [06_yolov5_training_environment.md](docs/06_yolov5_training_environment.md): Google Colab 기반 YOLOv5·YOLO11 학습 환경 구축 및 검증 가이드
+- [01_dataset_structure.md](docs/01_dataset_structure.md): 페이지 분류 및 객체 탐지 데이터셋 구조, 클래스 정의, 분할 기준
+- [02_dataset_collection.md](docs/02_dataset_collection.md): 객체 탐지 데이터셋 수집 대상, 촬영 조건, Roboflow 업로드 기준
+- [03_dataset_labeling.md](docs/03_dataset_labeling.md): Bounding Box 라벨링 기준 및 페이지별 객체 음성 설명 매핑
+- [04_dataset_preprocessing_augmentation.md](docs/04_dataset_preprocessing_augmentation.md): 데이터 전처리, 증강, split 검수 및 Roboflow Version 생성 기준
+- [06_yolov5_training_environment.md](docs/06_yolov5_training_environment.md): Google Colab 기반 YOLOv5·YOLO11 학습 환경 구축 및 검증 가이드
 
 ### Model Reports
 
-* [08_yolov5_yolo11_v6_model_comparison.md](docs/08_yolov5_yolo11_v6_model_comparison.md): YOLOv5s v6와 YOLO11n v6 성능 비교
-* [35_yolo11n_v6_training_report.md](docs/35_yolo11n_v6_training_report.md): YOLO11n v6 학습 결과 리포트
-* [45_yolov11_v11_training_report.md](docs/45_yolov11_v11_training_report.md): YOLO11n v11 학습 결과 리포트
-* [55_yolo11n_v15_training_report.md](docs/55_yolo11n_v15_training_report.md): YOLO11n v15 학습 결과 리포트
+- [08_yolov5_yolo11_v6_model_comparison.md](docs/08_yolov5_yolo11_v6_model_comparison.md): YOLOv5s v6와 YOLO11n v6 성능 비교
+- [35_yolo11n_v6_training_report.md](docs/35_yolo11n_v6_training_report.md): YOLO11n v6 학습 결과 리포트
+- [45_yolov11_v11_training_report.md](docs/45_yolov11_v11_training_report.md): YOLO11n v11 학습 결과 리포트
+- [55_yolo11n_v15_training_report.md](docs/55_yolo11n_v15_training_report.md): YOLO11n v15 학습 결과 리포트
 
 성능 비교 원본 CSV는 [08_yolov5_yolo11_v6_model_comparison.csv](docs/08_yolov5_yolo11_v6_model_comparison.csv)에 정리되어 있습니다.
 
@@ -123,11 +194,11 @@
 
 ### Model History
 
-| Model   | Dataset      | Precision | Recall | mAP@0.5 | mAP@0.5:0.95 | Artifact |
-| ------- | ------------ | --------: | -----: | ------: | -----------: | -------- |
-| YOLOv5s | Roboflow v2  |     0.847 |  0.889 |   0.898 |        0.641 | `artifacts/yolov5-v2/best.pt` |
-| YOLO11n | Roboflow v6  |     0.835 |  0.719 |   0.776 |        0.545 | `models/yolo11n_v6_best.pt` |
-| YOLO11n | Roboflow v11 |     0.903 |  0.857 |   0.919 |        0.708 | `artifacts/yolo11-v11/best.pt` |
+| Model   | Dataset      | Precision | Recall | mAP@0.5 | mAP@0.5:0.95 | Artifact                               |
+| ------- | ------------ | --------: | -----: | ------: | -----------: | -------------------------------------- |
+| YOLOv5s | Roboflow v2  |     0.847 |  0.889 |   0.898 |        0.641 | `artifacts/yolov5-v2/best.pt`          |
+| YOLO11n | Roboflow v6  |     0.835 |  0.719 |   0.776 |        0.545 | `models/yolo11n_v6_best.pt`            |
+| YOLO11n | Roboflow v11 |     0.903 |  0.857 |   0.919 |        0.708 | `artifacts/yolo11-v11/best.pt`         |
 | YOLO11n | Roboflow v15 |     0.936 |  0.842 |   0.896 |        0.689 | `artifacts/yolo11-v15/weights/best.pt` |
 
 v15 모델은 Precision이 높아 오탐 억제에 강점이 있지만, v11 대비 Recall과 bbox 정밀도 지표는 낮게 나타났습니다. 최종 적용 여부는 실제 웹캠 입력에서 손끝 선택 품질을 함께 확인해야 합니다.
@@ -191,12 +262,12 @@ Roboflow v15 데이터셋 기준으로 YOLO11n 모델을 학습했습니다. 상
 
 #### Test Set Performance
 
-| Metric        | Score |
-| ------------- | ----: |
-| Accuracy      | 1.000 |
-| Macro F1      | 1.000 |
-| Weighted F1   | 1.000 |
-| Test Images   |    40 |
+| Metric      | Score |
+| ----------- | ----: |
+| Accuracy    | 1.000 |
+| Macro F1    | 1.000 |
+| Weighted F1 | 1.000 |
+| Test Images |    40 |
 
 #### Class-wise Test Performance
 
@@ -296,9 +367,9 @@ bash scripts/run_yolo11_webcam.sh
 
 기본값은 다음과 같습니다.
 
-* `CONF=0.15`
-* `IMG_SIZE=960`
-* `POINT_MARGIN=50`
+- `CONF=0.15`
+- `IMG_SIZE=960`
+- `POINT_MARGIN=50`
 
 ```bash
 SOURCE=1 \
@@ -314,10 +385,10 @@ bash scripts/run_yolo11_webcam.sh
 
 ### Default Models
 
-* YOLO 모델: `artifacts/yolo11-v15/weights/best.pt`
-* YOLO 클래스 정보: `artifacts/yolo11-v15/configs/data.yaml`
-* 페이지 분류 모델: `artifacts/page-classifier-mobilenetv2/page_classifier_mobilenetv2.keras`
-* 손끝 추출 모델: `artifacts/hand-landmarker/hand_landmarker.task`
+- YOLO 모델: `artifacts/yolo11-v15/weights/best.pt`
+- YOLO 클래스 정보: `artifacts/yolo11-v15/configs/data.yaml`
+- 페이지 분류 모델: `artifacts/page-classifier-mobilenetv2/page_classifier_mobilenetv2.keras`
+- 손끝 추출 모델: `artifacts/hand-landmarker/hand_landmarker.task`
 
 ### Run Server
 
@@ -333,10 +404,10 @@ python3 -m uvicorn server.main:app --host 127.0.0.1 --port 8001
 
 `/predict`는 다음 정보를 반환합니다.
 
-* 페이지 분류 결과
-* YOLO 객체 검출 결과 전체
-* 손끝 좌표
-* 페이지 예측 신뢰도 정보
+- 페이지 분류 결과
+- YOLO 객체 검출 결과 전체
+- 손끝 좌표
+- 페이지 예측 신뢰도 정보
 
 손끝-객체 매칭은 백엔드 `/api/interaction/detect`에서 처리합니다.
 
@@ -364,11 +435,11 @@ python3 -m uvicorn server.main:app --host 127.0.0.1 --port 8001
 
 페이지 예측이 불안정한 경우 `/predict` 응답의 `page`에 다음 정보가 함께 포함됩니다.
 
-* `top_k`
-* `margin`
-* `raw`
-* `smoothed`
-* `reliable`
+- `top_k`
+- `margin`
+- `raw`
+- `smoothed`
+- `reliable`
 
 `reliable=false`인 경우 마지막으로 확정된 label을 유지하면서 confidence를 낮춰 백엔드 fallback이 동작하도록 합니다.
 
@@ -392,6 +463,6 @@ python3 -m uvicorn server.main:app --host 127.0.0.1 --port 8001
 
 ## Notes
 
-* 최종 모델 판단 시 test set 성능뿐 아니라 실제 웹캠 환경에서의 손끝 선택 정확도를 함께 확인해야 합니다.
-* 조명, 각도, 손가락 가림, 페이지 기울어짐에 따라 실제 서비스 성능이 달라질 수 있습니다.
-* 객체가 누락되는 경우 confidence threshold, image size, 손끝 판정 margin을 함께 조정합니다.
+- 최종 모델 판단 시 test set 성능뿐 아니라 실제 웹캠 환경에서의 손끝 선택 정확도를 함께 확인해야 합니다.
+- 조명, 각도, 손가락 가림, 페이지 기울어짐에 따라 실제 서비스 성능이 달라질 수 있습니다.
+- 객체가 누락되는 경우 confidence threshold, image size, 손끝 판정 margin을 함께 조정합니다.
