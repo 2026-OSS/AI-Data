@@ -8,6 +8,8 @@
 
 시각장애 아동이 촉각형 그림책을 손끝으로 가리키면 AI가 페이지와 객체를 인식하고 해당 설명을 음성으로 안내하는 시스템입니다.
 
+페이지별로 제공되는 설명 내용이 다르기 때문에, 먼저 현재 페이지를 분류한 뒤 객체 탐지 결과와 결합하여 사용자에게 적절한 설명을 제공합니다.
+
 ### Pipeline
 
 1. **Input**
@@ -35,6 +37,17 @@
    * TTS를 통해 음성 안내 제공
 
 <img width="1536" height="1024" alt="flowchart" src="https://github.com/user-attachments/assets/5b023550-2cf4-42cf-a46c-85c10c589053" />
+
+## Tech Stack
+
+| Area                    | Stack                     |
+| ----------------------- | ------------------------- |
+| Object Detection        | YOLO11n, Ultralytics      |
+| Page Classification     | MobileNetV2, TensorFlow   |
+| Hand Landmark Detection | MediaPipe                 |
+| Dataset Management      | Roboflow                  |
+| Inference Server        | FastAPI, Uvicorn          |
+| Model Experiment        | Google Colab, PyTorch     |
 
 ## Repository Structure
 
@@ -87,11 +100,88 @@
 
 ## Documents
 
-* [01_dataset_structure.md](docs/01_dataset_structure.md): 데이터셋 구조 및 클래스 정의
-* [02_dataset_collection.md](docs/02_dataset_collection.md): 객체 탐지 데이터셋 수집 기준
-* [03_dataset_labeling.md](docs/03_dataset_labeling.md): Roboflow 데이터 라벨링 및 페이지별 음성 설명 매핑
-* [04_dataset_preprocessing_augmentation.md](docs/04_dataset_preprocessing_augmentation.md): 데이터 전처리, 증강, 분할 검수 및 Roboflow Version 생성 기준
+### Dataset Guides
+
+* [01_dataset_structure.md](docs/01_dataset_structure.md): 페이지 분류 및 객체 탐지 데이터셋 구조, 클래스 정의, 분할 기준
+* [02_dataset_collection.md](docs/02_dataset_collection.md): 객체 탐지 데이터셋 수집 대상, 촬영 조건, Roboflow 업로드 기준
+* [03_dataset_labeling.md](docs/03_dataset_labeling.md): Bounding Box 라벨링 기준 및 페이지별 객체 음성 설명 매핑
+* [04_dataset_preprocessing_augmentation.md](docs/04_dataset_preprocessing_augmentation.md): 데이터 전처리, 증강, split 검수 및 Roboflow Version 생성 기준
 * [06_yolov5_training_environment.md](docs/06_yolov5_training_environment.md): Google Colab 기반 YOLOv5·YOLO11 학습 환경 구축 및 검증 가이드
+
+### Model Reports
+
+* [08_yolov5_yolo11_v6_model_comparison.md](docs/08_yolov5_yolo11_v6_model_comparison.md): YOLOv5s v6와 YOLO11n v6 성능 비교
+* [35_yolo11n_v6_training_report.md](docs/35_yolo11n_v6_training_report.md): YOLO11n v6 학습 결과 리포트
+* [45_yolov11_v11_training_report.md](docs/45_yolov11_v11_training_report.md): YOLO11n v11 학습 결과 리포트
+* [55_yolo11n_v15_training_report.md](docs/55_yolo11n_v15_training_report.md): YOLO11n v15 학습 결과 리포트
+
+성능 비교 원본 CSV는 [08_yolov5_yolo11_v6_model_comparison.csv](docs/08_yolov5_yolo11_v6_model_comparison.csv)에 정리되어 있습니다.
+
+## Model Performance
+
+현재 백엔드와 웹캠 테스트의 기본 객체 탐지 모델은 YOLO11n v15입니다.
+
+### Model History
+
+| Model   | Dataset      | Precision | Recall | mAP@0.5 | mAP@0.5:0.95 | Artifact |
+| ------- | ------------ | --------: | -----: | ------: | -----------: | -------- |
+| YOLOv5s | Roboflow v2  |     0.847 |  0.889 |   0.898 |        0.641 | `artifacts/yolov5-v2/best.pt` |
+| YOLO11n | Roboflow v6  |     0.835 |  0.719 |   0.776 |        0.545 | `models/yolo11n_v6_best.pt` |
+| YOLO11n | Roboflow v11 |     0.903 |  0.857 |   0.919 |        0.708 | `artifacts/yolo11-v11/best.pt` |
+| YOLO11n | Roboflow v15 |     0.936 |  0.842 |   0.896 |        0.689 | `artifacts/yolo11-v15/weights/best.pt` |
+
+v15 모델은 Precision이 높아 오탐 억제에 강점이 있지만, v11 대비 Recall과 bbox 정밀도 지표는 낮게 나타났습니다. 최종 적용 여부는 실제 웹캠 입력에서 손끝 선택 품질을 함께 확인해야 합니다.
+
+### YOLO11n v15 Object Detection
+
+Roboflow v15 데이터셋 기준으로 YOLO11n 모델을 학습했습니다. 상세 내용은 [55_yolo11n_v15_training_report.md](docs/55_yolo11n_v15_training_report.md)에 정리되어 있습니다.
+
+#### Test Set Performance
+
+| Metric       | Score |
+| ------------ | ----: |
+| Precision    | 0.936 |
+| Recall       | 0.842 |
+| mAP@0.5      | 0.896 |
+| mAP@0.5:0.95 | 0.689 |
+
+#### Validation Set Performance
+
+| Metric       | Score |
+| ------------ | ----: |
+| Images       |   247 |
+| Instances    |   232 |
+| Precision    | 0.929 |
+| Recall       | 0.904 |
+| mAP@0.5      | 0.947 |
+| mAP@0.5:0.95 | 0.743 |
+
+#### Class-wise Test Performance
+
+| Class               | Precision | Recall | mAP@0.5 | mAP@0.5:0.95 |
+| ------------------- | --------: | -----: | ------: | -----------: |
+| `book_flower`       |     0.967 |  0.714 |   0.897 |        0.506 |
+| `book_flowerpot`    |     0.860 |  0.867 |   0.894 |        0.626 |
+| `book_monkey`       |     0.870 |  0.750 |   0.881 |        0.685 |
+| `book_stone`        |     1.000 |  0.729 |   0.835 |        0.725 |
+| `braille`           |     0.838 |  0.974 |   0.838 |        0.708 |
+| `tactile_flower`    |     0.985 |  1.000 |   0.995 |        0.796 |
+| `tactile_flowerpot` |     0.871 |  0.797 |   0.914 |        0.713 |
+| `tactile_monkey`    |     1.000 |  0.776 |   0.827 |        0.668 |
+| `tactile_stone`     |     0.976 |  1.000 |   0.995 |        0.805 |
+| `text`              |     0.990 |  0.815 |   0.885 |        0.660 |
+
+`book_flower`, `book_monkey`, `book_stone`은 Recall이 상대적으로 낮아 실제 웹캠 환경에서 미탐 사례를 우선 확인해야 합니다. 손끝 좌표와 bbox를 매칭하는 구조이므로 단순 탐지 성능뿐 아니라 bbox 정밀도와 손끝 선택 정확도도 함께 검증합니다.
+
+#### Training Results
+
+<p align="center">
+  <img src="artifacts/yolo11-v15/results/graphs/results.png" width="900" alt="YOLO11n v15 training curves">
+</p>
+
+<p align="center">
+  <img src="artifacts/yolo11-v15/results/graphs/confusion_matrix.png" width="700" alt="YOLO11n v15 confusion matrix">
+</p>
 
 ## Webcam Page Classifier
 
@@ -264,3 +354,9 @@ PAGE_MODEL_PATH=artifacts/page-classifier-mobilenetv2/page_classifier_mobilenetv
 HAND_LANDMARKER_MODEL_PATH=artifacts/hand-landmarker/hand_landmarker.task \
 python3 -m uvicorn server.main:app --host 127.0.0.1 --port 8001
 ```
+
+## Notes
+
+* 최종 모델 판단 시 test set 성능뿐 아니라 실제 웹캠 환경에서의 손끝 선택 정확도를 함께 확인해야 합니다.
+* 조명, 각도, 손가락 가림, 페이지 기울어짐에 따라 실제 서비스 성능이 달라질 수 있습니다.
+* 객체가 누락되는 경우 confidence threshold, image size, 손끝 판정 margin을 함께 조정합니다.
