@@ -183,6 +183,41 @@ Roboflow v15 데이터셋 기준으로 YOLO11n 모델을 학습했습니다. 상
   <img src="artifacts/yolo11-v15/results/graphs/confusion_matrix.png" width="700" alt="YOLO11n v15 confusion matrix">
 </p>
 
+### MobileNetV2 Page Classification
+
+`artifacts/page-classifier-mobilenetv2/page_classifier_mobilenetv2.keras` 모델은 Roboflow 페이지 분류 데이터셋 기반으로 학습한 페이지 분류 모델입니다.
+
+제공된 40장 테스트 split 기준으로 모든 클래스가 정분류되었으며, 상세 산출물은 `artifacts/page-classifier-mobilenetv2`에 포함되어 있습니다.
+
+#### Test Set Performance
+
+| Metric        | Score |
+| ------------- | ----: |
+| Accuracy      | 1.000 |
+| Macro F1      | 1.000 |
+| Weighted F1   | 1.000 |
+| Test Images   |    40 |
+
+#### Class-wise Test Performance
+
+| Class   | Precision | Recall | F1-score | Support |
+| ------- | --------: | -----: | -------: | ------: |
+| `none`  |     1.000 |  1.000 |    1.000 |      13 |
+| `page1` |     1.000 |  1.000 |    1.000 |       8 |
+| `page2` |     1.000 |  1.000 |    1.000 |      12 |
+| `page3` |     1.000 |  1.000 |    1.000 |       7 |
+
+#### Confusion Matrix
+
+| Actual \ Predicted | `none` | `page1` | `page2` | `page3` |
+| ------------------ | -----: | ------: | ------: | ------: |
+| `none`             |     13 |       0 |       0 |       0 |
+| `page1`            |      0 |       8 |       0 |       0 |
+| `page2`            |      0 |       0 |      12 |       0 |
+| `page3`            |      0 |       0 |       0 |       7 |
+
+학습 history의 마지막 epoch 기준 validation accuracy는 0.988, validation loss는 0.033입니다. 실제 웹캠 입력에서는 조명, 각도, 손 가림에 따라 분류가 흔들릴 수 있어 EMA smoothing, confidence threshold, top1-top2 margin, stable frame 조건을 함께 적용합니다.
+
 ## Webcam Page Classifier
 
 `artifacts/page-classifier-mobilenetv2/page_classifier_mobilenetv2.keras` 모델로 웹캠 페이지 분류를 실행할 수 있습니다.
