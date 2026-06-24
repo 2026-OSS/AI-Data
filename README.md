@@ -461,6 +461,10 @@ HAND_LANDMARKER_MODEL_PATH=artifacts/hand-landmarker/hand_landmarker.task \
 python3 -m uvicorn server.main:app --host 127.0.0.1 --port 8001
 ```
 
+## License
+
+본 프로젝트는 MIT License를 따릅니다. 자세한 내용은 [LICENSE](LICENSE)를 참고하세요.
+
 ## Notes
 
 - 최종 모델 판단 시 test set 성능뿐 아니라 실제 웹캠 환경에서의 손끝 선택 정확도를 함께 확인해야 합니다.
