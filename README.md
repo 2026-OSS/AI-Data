@@ -33,6 +33,16 @@
 
 <img width="1536" height="1024" alt="flowchart" src="https://github.com/user-attachments/assets/5b023550-2cf4-42cf-a46c-85c10c589053" />
 
+### Reading Screen
+
+실시간 카메라 영상 위에 AI 인식 결과를 함께 표시하는 독서 화면입니다.
+
+- YOLO11 기반 객체 탐지 결과 시각화
+- MediaPipe Hands 기반 손끝 위치 표시
+- 손끝 좌표와 객체 bbox를 매칭해 사용자가 가리키는 객체 확인
+
+<img width="1232" height="767" alt="독서 화면 객체 탐지 결과 및 손끝 위치 추적" src="https://github.com/user-attachments/assets/62d265f5-7f3c-46ad-b490-e3097723adc8" />
+
 ## Tech Stack
 
 | Area                    | Stack                   |
